@@ -314,7 +314,8 @@ class ListInput(object):
 
 class ArrayPointer:
     """
-    Data object for storing single pointers and working with array based input data
+    Data object for storing single pointers and
+    working with array based input data
 
     Parameters
     ----------

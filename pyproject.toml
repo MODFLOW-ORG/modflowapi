@@ -76,6 +76,7 @@ extend-include = [
 ]
 
 [tool.ruff.lint]
+select = ["F", "E", "I001"]
 ignore = [
     "F841" # local variable assigned but never used
 ]

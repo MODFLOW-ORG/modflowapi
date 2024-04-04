@@ -3,9 +3,9 @@ import textwrap
 from datetime import datetime
 from os.path import basename
 from pathlib import Path
-from packaging.version import Version
 
 from filelock import FileLock
+from packaging.version import Version
 
 _project_name = "modflowapi"
 _project_root_path = Path(__file__).parent.parent
@@ -81,11 +81,11 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(
             """\
-            Update version information stored in version.txt in the project root,
-            as well as several other files in the repository. If --version is not
-            provided, the version number will not be changed. A file lock is held
-            to synchronize file access. The version tag must comply with standard
-            '<major>.<minor>.<patch>' format conventions for semantic versioning.
+            Update version information in version.txt in the project root,
+            as well as several other files in the repository. If --version
+            is not provided, the version number will not be changed. A file
+            lock is held to synchronize file access. The version tag must be
+            standard '<major>.<minor>.<patch>' format for semantic versioning.
             """
         ),
     )
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         "--get",
         required=False,
         action="store_true",
-        help="Just get the current version number, don't update anything (defaults to false)",
+        help="Get the current version number, no updates (defaults false)",
     )
     args = parser.parse_args()
 

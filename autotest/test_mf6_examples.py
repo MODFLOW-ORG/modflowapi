@@ -1,9 +1,10 @@
 from pathlib import Path
 from shutil import copytree
-from modflowapi import run_simulation
 
 import pytest
+
 from autotest.conftest import is_nested
+from modflowapi import run_simulation
 
 pytestmark = pytest.mark.mf6
 dll = "libmf6"
@@ -35,13 +36,15 @@ def test_mf6_example_simulations(function_tmpdir, mf6_example_namfiles):
         pass
 
     def run_models():
-        # run models in order received (should be alphabetical, so gwf precedes gwt)
+        # run models in order received (should be alphabetical,
+        # so gwf precedes gwt)
         for namfile in mf6_example_namfiles:
             namfile_path = Path(namfile).resolve()
             model_path = namfile_path.parent
 
-            # working directory must be named according to the name file's parent (e.g.
-            # 'mf6gwf') because coupled models refer to each other with relative paths
+            # working directory must be named according to namefile's parent
+            # (e.g. 'mf6gwf') because coupled models refer to each other with
+            # relative paths
             wrkdir = (
                 Path(function_tmpdir / model_path.name)
                 if nested

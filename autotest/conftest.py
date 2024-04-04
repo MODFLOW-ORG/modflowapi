@@ -5,7 +5,6 @@ from tempfile import gettempdir
 
 import pytest
 from filelock import FileLock
-
 from modflow_devtools.download import download_and_unzip
 
 # import modflow-devtools fixtures

@@ -1,6 +1,7 @@
+from enum import Enum
+
 from .. import ModflowApi
 from .apisimulation import ApiSimulation
-from enum import Enum
 
 
 class Callbacks(Enum):

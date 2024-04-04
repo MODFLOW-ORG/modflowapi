@@ -1,11 +1,11 @@
+import numpy as np
+
 from .pakbase import (
     AdvancedPackage,
     ArrayPackage,
     ListPackage,
     package_factory,
 )
-import numpy as np
-
 
 gridshape = {
     "dis": ["nlay", "nrow", "ncol"],

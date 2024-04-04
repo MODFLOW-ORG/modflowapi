@@ -1,4 +1,5 @@
 from xmipy import XmiWrapper
+
 from .util import amend_libmf6_path
 
 
