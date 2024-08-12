@@ -151,6 +151,15 @@ jobs:
           pip install .[test]
 
       - name: Install modflow executables
+        if: runner.os != 'macOS'
+        uses: modflowpy/install-modflow-action@v1
+        with:
+          path: ${{ github.workspace }}/autotest
+          repo: executables
+          tag: "14.0"
+
+      - name: Install modflow executables (macOS)
+        if: runner.os == 'macOS'
         uses: modflowpy/install-modflow-action@v1
         with:
           path: ${{ github.workspace }}/autotest
