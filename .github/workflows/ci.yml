@@ -156,6 +156,7 @@ jobs:
           path: ${{ github.workspace }}/autotest
           repo: executables
           tag: "14.0"
+          ostag: mac
 
       - name: Run autotests
         working-directory: ./autotest
