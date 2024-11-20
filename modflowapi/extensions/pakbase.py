@@ -710,7 +710,7 @@ class AdvancedPackage(PackageBase):
 
 class ApiSlnPackage(ScalarPackage):
     """
-    Class to acess solution packages
+    Class to access solution packages
 
     Parameters
     ----------

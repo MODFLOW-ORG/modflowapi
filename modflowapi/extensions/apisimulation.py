@@ -19,7 +19,7 @@ class ApiSimulation:
     solutions : dict
         dictionary of solution_id: solution_name
     exchanges : dict
-        dictoinary of exchange_name: modflowapi.extensions.ApiExchange objects
+        dictionary of exchange_name: modflowapi.extensions.ApiExchange objects
     tdis : ApiTdisPackage
         time discretization (TDIS) ScalarPackage
     ats : None or ApiAtsPackage

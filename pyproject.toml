@@ -55,6 +55,7 @@ test = [
     "rasterstats"
 ]
 lint = [
+    "codespell[toml] >=2.2.2",
     "ruff",
 ]
 
@@ -86,4 +87,13 @@ extend-include = [
 select = ["F", "E", "I001"]
 ignore = [
     "F841" # local variable assigned but never used
+]
+
+[tool.codespell]
+skip = "cliff.toml,*.grb"
+ignore-words-list = [
+    "delt",
+    "wel",
+    "nam",
+    "ist",
 ]
