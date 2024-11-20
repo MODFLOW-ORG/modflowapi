@@ -46,9 +46,7 @@ def test_mf6_example_simulations(function_tmpdir, mf6_example_namfiles):
             # (e.g. 'mf6gwf') because coupled models refer to each other with
             # relative paths
             wrkdir = (
-                Path(function_tmpdir / model_path.name)
-                if nested
-                else function_tmpdir
+                Path(function_tmpdir / model_path.name) if nested else function_tmpdir
             )
             try:
                 run_simulation(dll, wrkdir, callback, verbose=True)

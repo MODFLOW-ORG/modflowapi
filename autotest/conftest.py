@@ -49,10 +49,7 @@ def pytest_generate_tests(metafunc):
     #   - ex-gwtgwt-mt3dms-p10: https://github.com/MODFLOW-USGS/modflow6/pull/1008
     option_value = metafunc.config.option.mf6_examples_path
     t = metafunc.fixturenames
-    if (
-        "mf6_example_namfiles" in metafunc.fixturenames
-        and option_value is not None
-    ):
+    if "mf6_example_namfiles" in metafunc.fixturenames and option_value is not None:
         mf6_examples_path = Path(option_value)
         global __mf6_examples
         __mf6_examples = str(mf6_examples_path.name)
@@ -97,9 +94,7 @@ def pytest_generate_tests(metafunc):
             model_namfiles = list(model_namfiles)
             if len(model_namfiles) > 1:
                 # trap gwf models as first set of models
-                idxs = [
-                    ix for ix, _ in enumerate(model_namfiles) if "gwf" in _
-                ]
+                idxs = [ix for ix, _ in enumerate(model_namfiles) if "gwf" in _]
                 if len(idxs) > 0:
                     for ix in idxs[::-1]:
                         models.append(model_namfiles.pop(ix))
@@ -125,6 +120,4 @@ def pytest_generate_tests(metafunc):
                 namfile.parent.parent if is_nested(namfile) else namfile.parent
             ).name
 
-        metafunc.parametrize(
-            key, simulations, ids=simulation_name_from_model_namfiles
-        )
+        metafunc.parametrize(key, simulations, ids=simulation_name_from_model_namfiles)

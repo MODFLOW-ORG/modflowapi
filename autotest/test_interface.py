@@ -98,9 +98,7 @@ def test_dis_model(function_tmpdir):
 
             rch = model.rch
             if len(rch) != 2:
-                raise AssertionError(
-                    "ApiModel object not returning multiple packages"
-                )
+                raise AssertionError("ApiModel object not returning multiple packages")
 
             idomain = dis.idomain.values
             if not isinstance(idomain, np.ndarray):
@@ -193,9 +191,7 @@ def test_disv_model(function_tmpdir):
 
             chd = model.chd
             if len(chd) != 2:
-                raise AssertionError(
-                    "ApiModel object not returning multiple packages"
-                )
+                raise AssertionError("ApiModel object not returning multiple packages")
 
             top = dis.top.values
             if not isinstance(top, np.ndarray):
@@ -347,9 +343,7 @@ def test_ats_model(function_tmpdir):
         if step == Callbacks.timestep_start:
             if sim.kstp == 1:
                 if delt0 == sim.delt:
-                    raise AssertionError(
-                        "ATS routines not reducing timestep length"
-                    )
+                    raise AssertionError("ATS routines not reducing timestep length")
 
         name = "ats0"
         sim_pth = data_pth / name

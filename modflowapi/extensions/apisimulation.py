@@ -221,9 +221,7 @@ class ApiSimulation:
             model name (ex. "GWF_1") or subcomponent id (ex. 1)
         """
         if model_id is None:
-            model_id = int(
-                min([model.subcomponent_id for model in self.models])
-            )
+            model_id = int(min([model.subcomponent_id for model in self.models]))
 
         if isinstance(model_id, int):
             for model in self.models:
@@ -329,9 +327,7 @@ class ApiSimulation:
 
         # TDIS package construction
         tdis_constructor = package_factory("tdis", ScalarPackage)
-        tdis = tdis_constructor(
-            ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True
-        )
+        tdis = tdis_constructor(ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True)
 
         ats = None
         # ATS package construction
@@ -346,9 +342,7 @@ class ApiSimulation:
         # get the exchanges
         exchange_names = []
         for variable in variables:
-            if variable.startswith("GWF-GWF") or variable.startswith(
-                "GWT-GWT"
-            ):
+            if variable.startswith("GWF-GWF") or variable.startswith("GWT-GWT"):
                 exchange_name = variable.split("/")[0]
                 if exchange_name not in exchange_names:
                     exchange_names.append(exchange_name)

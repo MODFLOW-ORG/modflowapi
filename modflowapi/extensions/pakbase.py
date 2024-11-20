@@ -258,9 +258,7 @@ class PackageBase:
 
                 if sim_package:
                     var_addrs.append(
-                        self.model.mf6.get_var_address(
-                            var.upper(), self.pkg_name
-                        )
+                        self.model.mf6.get_var_address(var.upper(), self.pkg_name)
                     )
                 else:
                     var_addrs.append(
@@ -335,8 +333,7 @@ class PackageBase:
         name = name.lower()
         if name not in self.advanced_vars:
             raise AssertionError(
-                f"{name} is not accessible as an advanced "
-                f"variable for this package"
+                f"{name} is not accessible as an advanced variable for this package"
             )
 
         values = self._variables_adv.get_variable(name)
@@ -432,9 +429,7 @@ class ListPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "list", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "list", sim_package)
 
         self._variables = ListInput(self)
 
@@ -497,9 +492,7 @@ class ArrayPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "array", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "array", sim_package)
 
         self._variables = ArrayInput(self)
 
@@ -595,9 +588,7 @@ class ScalarPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "scalar", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "scalar", sim_package)
 
         self._variables = ScalarInput(self)
 
@@ -697,9 +688,7 @@ class AdvancedPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "advanced", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
 
     def __repr__(self):
         s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"

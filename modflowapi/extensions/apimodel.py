@@ -100,9 +100,7 @@ class ApiMbase:
             package = package(basepackage, self, pkg_type, adj_pkg_name)
             self.package_dict[pkg_name.lower()] = package
 
-    def get_package(
-        self, pkg_name
-    ) -> ListPackage or ArrayPackage or AdvancedPackage:
+    def get_package(self, pkg_name) -> ListPackage or ArrayPackage or AdvancedPackage:
         """
         Method to get a package
 
@@ -115,9 +113,7 @@ class ApiMbase:
         if pkg_name in self.package_dict:
             return self.package_dict[pkg_name]
 
-        raise KeyError(
-            f"{pkg_name} is not a valid package name for this model"
-        )
+        raise KeyError(f"{pkg_name} is not a valid package name for this model")
 
 
 class ApiModel(ApiMbase):
@@ -148,9 +144,7 @@ class ApiModel(ApiMbase):
             self.dis_type = "disu"
             self.dis_name = "DIS"
         else:
-            raise AssertionError(
-                f"Unrecognized discretization type {grid_type}"
-            )
+            raise AssertionError(f"Unrecognized discretization type {grid_type}")
 
         pkg_types = {
             "dis": ArrayPackage,
@@ -192,10 +186,7 @@ class ApiModel(ApiMbase):
         s = f"{self.name}, "
         shape = self.shape
         if self.dis_type == "dis":
-            s += (
-                f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} "
-                f"Column model\n"
-            )
+            s += f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} Column model\n"
 
         elif self.dis_type == "disu":
             if len(shape) == 2:
@@ -319,9 +310,7 @@ class ApiModel(ApiMbase):
                 if var_addr in ivn:
                     shape.append(self.mf6.get_value(var_addr)[0])
             if not shape:
-                var_addr = self.mf6.get_var_address(
-                    "NODES", self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address("NODES", self.name, self.dis_name)
                 shape.append(self.mf6.get_value(var_addr)[0])
             self._shape = tuple(shape)
         return self._shape

@@ -237,12 +237,8 @@ class ListInput(object):
 
         for name in recarray.dtype.names:
             if name in self._nodevars:
-                multi_index = tuple(
-                    np.array([list(i) for i in recarray[name]]).T
-                )
-                nodes = np.ravel_multi_index(
-                    multi_index, self.parent.model.shape
-                )
+                multi_index = tuple(np.array([list(i) for i in recarray[name]]).T)
+                nodes = np.ravel_multi_index(multi_index, self.parent.model.shape)
                 recarray[name] = self.parent.model.usertonode[nodes] + 1
 
             if name in self.parent._bound_vars:
@@ -250,14 +246,10 @@ class ListInput(object):
                     # Block slated for deprecation after IDM inclusion
                     idx = self.parent._bound_vars.index(name)
                     bname = "bound"
-                    self._ptrs[bname][0 : self._nbound[0], idx] = recarray[
-                        name
-                    ]
+                    self._ptrs[bname][0 : self._nbound[0], idx] = recarray[name]
                 elif self.parent._idm_enabled:
                     # new IDM simplification
-                    self._ptrs[name][0 : self._nbound[0]] = recarray[
-                        name
-                    ].ravel()
+                    self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel()
                 else:
                     pass
             elif name in self._auxnames:
@@ -569,9 +561,7 @@ class ArrayInput:
         if item in self._ptrs:
             self._ptrs[item].values = array
         else:
-            raise KeyError(
-                f"{item} is not a valid variable name for this package"
-            )
+            raise KeyError(f"{item} is not a valid variable name for this package")
 
 
 class AdvancedInput(object):
@@ -631,13 +621,9 @@ class AdvancedInput(object):
                 )
         else:
             if self.parent is not None:
-                var_addr = self.mf6.get_var_address(
-                    name.upper(), self.parent.pkg_name
-                )
+                var_addr = self.mf6.get_var_address(name.upper(), self.parent.pkg_name)
             else:
-                var_addr = self.mf6.get_var_address(
-                    name.upper(), package.upper()
-                )
+                var_addr = self.mf6.get_var_address(name.upper(), package.upper())
 
         try:
             values = self.mf6.get_value_ptr(var_addr)

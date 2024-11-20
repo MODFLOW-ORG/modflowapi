@@ -69,18 +69,7 @@ version = {attr = "modflowapi.version.__version__"}
 include = ["modflowapi", "modflowapi.*"]
 
 [tool.ruff]
-target-version = "py38"
-line-length = 79
-include = [
-    "pyproject.toml",
-    "modflowapi/**/*.py",
-    "autotest/**/*.py",
-    "examples/**/*.py",
-    "scripts/**/*.py",
-]
-extend-include = [
-    "examples/**/*.ipynb"
-]
+line-length = 88
 
 [tool.ruff.lint]
 select = ["F", "E", "I001"]

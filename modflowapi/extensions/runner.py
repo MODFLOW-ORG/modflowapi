@@ -64,10 +64,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         mf6.prepare_time_step(dt)
 
         if verbose:
-            print(
-                f"Solving: Stress Period {sim.kper + 1}; "
-                f"Timestep {sim.kstp + 1}"
-            )
+            print(f"Solving: Stress Period {sim.kper + 1}; Timestep {sim.kstp + 1}")
 
         for sol_id, slnobj in sorted(sim.solutions.items()):
             models = {}
