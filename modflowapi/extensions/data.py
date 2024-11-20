@@ -455,7 +455,7 @@ class ArrayInput:
 
     def __getattr__(self, item):
         """
-        Dynamic method to get modflow varaibles as an attribute
+        Dynamic method to get modflow variables as an attribute
         """
         if item in self._ptrs:
             return self._ptrs[item]
@@ -483,7 +483,7 @@ class ArrayInput:
             if isinstance(value, ArrayPointer):
                 self._ptrs[item] = value
         else:
-            raise AttributeError(f"{item} is not a vaild attribute")
+            raise AttributeError(f"{item} is not a valid attribute")
 
     @property
     def variable_names(self):
@@ -600,7 +600,7 @@ class AdvancedInput(object):
         model : str
             optional model name, note this is required if parent is None
         package : str
-            optional package name, note this is requried if parent is None
+            optional package name, note this is required if parent is None
 
         Returns:
         -------
@@ -647,7 +647,7 @@ class AdvancedInput(object):
         model : str
             optional model name, note this is required if parent is None
         package : str
-            optional package name, note this is requried if parent is None
+            optional package name, note this is required if parent is None
 
         Returns:
         -------
@@ -666,7 +666,7 @@ class AdvancedInput(object):
 
         if values0.shape != values.shape:
             raise ValueError(
-                f"Array shapes are incompatable: "
+                f"Array shapes are incompatible: "
                 f"current shape={values.shape}, valid shape={values0.shape}"
             )
 
@@ -718,7 +718,7 @@ class ScalarInput:
 
     def __getattr__(self, item):
         """
-        Dynamic method to get modflow varaibles as an attribute
+        Dynamic method to get modflow variables as an attribute
         """
         if item in self._ptrs:
             return self._ptrs[item]
@@ -745,7 +745,7 @@ class ScalarInput:
         elif item in self._ptrs:
             self._ptrs[item] = value
         else:
-            raise AttributeError(f"{item} is not a vaild attribute")
+            raise AttributeError(f"{item} is not a valid attribute")
 
     @property
     def variable_names(self):

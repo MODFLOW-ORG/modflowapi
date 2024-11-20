@@ -79,6 +79,9 @@ jobs:
     - name: Check format
       run: ruff format . --check
 
+    - name: Check spelling
+      run: codespell
+
   autotest_extensions:
     name: modflowapi extensions autotests
     needs: lint
