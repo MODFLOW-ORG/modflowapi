@@ -34,15 +34,9 @@ class ListInput(object):
         self._nodevars = ("nodelist", "nexg", "maxats")
         self._boundvars = ("bound",)
 
-        self._maxbound = [
-            0,
-        ]
-        self._nbound = [
-            0,
-        ]
-        self._naux = [
-            0,
-        ]
+        self._maxbound = [0]
+        self._nbound = [0]
+        self._naux = [0]
         self._auxnames = []
         self._dtype = []
         self._reduced_to_var_addr = {}
@@ -432,12 +426,8 @@ class ArrayInput:
             self.var_addrs = var_addrs
             self.mf6 = mf6
 
-        self._maxbound = [
-            0,
-        ]
-        self._nbound = [
-            0,
-        ]
+        self._maxbound = [0]
+        self._nbound = [0]
         self._reduced_to_var_addr = {}
         self._set_arrays()
 

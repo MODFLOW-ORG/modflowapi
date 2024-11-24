@@ -99,9 +99,8 @@ def pytest_generate_tests(metafunc):
                     for ix in idxs[::-1]:
                         models.append(model_namfiles.pop(ix))
 
-            models += list(
-                sorted(model_namfiles)
-            )  # sort remaining models in alphabetical order (gwe < gwt < prt)
+            # sort remaining models in alphabetical order (gwe < gwt < prt)
+            models += list(sorted(model_namfiles))
             simulations.append(models)
             print(
                 f"Simulation {model_name} has {len(models)} model(s):\n"

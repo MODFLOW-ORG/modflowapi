@@ -18,13 +18,7 @@ pkgvars = {
         "nbound",
         "maxbound",
         "nodelist",
-        (
-            "bound",
-            (
-                "elev",
-                "cond",
-            ),
-        ),
+        ("bound", ("elev", "cond")),
         "naux",
         "auxname_cst",
         "auxvar",
@@ -33,14 +27,7 @@ pkgvars = {
         "nbound",
         "maxbound",
         "nodelist",
-        (
-            "bound",
-            (
-                "surface",
-                "rate",
-                "depth",
-            ),
-        ),
+        ("bound", ("surface", "rate", "depth")),
         # "pxdp:NSEG", "petm:NSEG"
         "naux",
         "auxname_cst",
@@ -50,13 +37,7 @@ pkgvars = {
         "nbound",
         "maxbound",
         "nodelist",
-        (
-            "bound",
-            (
-                "bhead",
-                "cond",
-            ),
-        ),
+        ("bound", ("bhead", "cond")),
         "naux",
         "auxname_cst",
         "auxvar",
@@ -149,15 +130,7 @@ pkgvars = {
     "gwt-gwt": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
     "gwe-gwe": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
     # simulation
-    "ats": [
-        "maxats",
-        "iperats",
-        "dt0",
-        "dtmin",
-        "dtmax",
-        "dtadj",
-        "dtfailadj",
-    ],
+    "ats": ["maxats", "iperats", "dt0", "dtmin", "dtmax", "dtadj", "dtfailadj"],
     "tdis": [
         "nper",
         "itmuni",
@@ -194,10 +167,7 @@ pkgvars = {
         "iscl",
         "iord",
     ],
-    "sln-ems": [
-        "icnvg",
-        "ttsoln",
-    ],
+    "sln-ems": ["icnvg", "ttsoln"],
 }
 
 
@@ -508,12 +478,7 @@ class ArrayPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -604,12 +569,7 @@ class ScalarPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -756,10 +716,6 @@ def package_factory(pkg_type, basepackage):
     cls_str = "".join(pkg_type.split("-"))
     cls_str = f"{cls_str[0].upper()}{cls_str[1:]}"
 
-    package = type(
-        f"Api{cls_str}Package",
-        (basepackage,),
-        {"__init__": __init__},
-    )
+    package = type(f"Api{cls_str}Package", (basepackage,), {"__init__": __init__})
 
     return package

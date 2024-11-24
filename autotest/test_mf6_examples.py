@@ -28,8 +28,7 @@ def test_mf6_example_simulations(function_tmpdir, mf6_example_namfiles):
     function_tmpdir = Path(function_tmpdir / "workspace")
 
     copytree(
-        src=namfile.parent.parent if nested else namfile.parent,
-        dst=function_tmpdir,
+        src=namfile.parent.parent if nested else namfile.parent, dst=function_tmpdir
     )
 
     def callback(sim, step):

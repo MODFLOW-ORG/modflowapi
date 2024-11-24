@@ -7,11 +7,7 @@ import pytest
 from modflow_devtools.misc import set_dir
 
 from modflowapi import Callbacks, ModflowApi, run_simulation
-from modflowapi.extensions.pakbase import (
-    AdvancedPackage,
-    ArrayPackage,
-    ListPackage,
-)
+from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
 
 data_pth = Path("../examples/data")
 pytestmark = pytest.mark.extensions
@@ -386,9 +382,7 @@ def test_rhs_hcof_advanced(function_tmpdir):
             rhs3 = wel.rhs
 
             np.testing.assert_allclose(
-                rhs,
-                rhs3,
-                err_msg="set advanced var method not working properly",
+                rhs, rhs3, err_msg="set advanced var method not working properly"
             )
 
             npf = model.npf
