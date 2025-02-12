@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "modflowapi"
@@ -63,11 +63,14 @@ lint = [
 Repository = "https://github.com/MODFLOW-USGS/modflowapi"
 Publication = "https://doi.org/10.1016/j.envsoft.2021.105257"
 
-[tool.setuptools.dynamic]
-version = {attr = "modflowapi.version.__version__"}
+[tool.hatch.build.targets.sdist]
+only-include = ["modflowapi"]
 
-[tool.setuptools.packages.find]
-include = ["modflowapi", "modflowapi.*"]
+[tool.hatch.build.targets.wheel]
+packages = ["modflowapi"]
+
+[tool.hatch.version]
+path = "modflowapi/version.py"
 
 [tool.ruff]
 line-length = 88
