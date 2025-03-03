@@ -60,7 +60,7 @@ lint = [
 ]
 
 [project.urls]
-Repository = "https://github.com/MODFLOW-USGS/modflowapi"
+Repository = "https://github.com/MODFLOW-ORG/modflowapi"
 Publication = "https://doi.org/10.1016/j.envsoft.2021.105257"
 
 [tool.hatch.build.targets.sdist]

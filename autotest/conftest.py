@@ -24,7 +24,7 @@ def get_mf6_examples_path() -> Path:
         if not __mf6_examples_path.is_dir():
             __mf6_examples_path.mkdir(exist_ok=True)
             download_and_unzip(
-                url="https://github.com/MODFLOW-USGS/modflow6-examples/releases/download/current/modflow6-examples.zip",
+                url="https://github.com/MODFLOW-ORG/modflow6-examples/releases/download/current/modflow6-examples.zip",
                 path=__mf6_examples_path,
                 verbose=True,
             )
@@ -46,7 +46,7 @@ def is_nested(namfile) -> bool:
 
 def pytest_generate_tests(metafunc):
     # examples to skip:
-    #   - ex-gwtgwt-mt3dms-p10: https://github.com/MODFLOW-USGS/modflow6/pull/1008
+    #   - ex-gwtgwt-mt3dms-p10: https://github.com/MODFLOW-ORG/modflow6/pull/1008
     option_value = metafunc.config.option.mf6_examples_path
     t = metafunc.fixturenames
     if "mf6_example_namfiles" in metafunc.fixturenames and option_value is not None:

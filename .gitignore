@@ -135,3 +135,6 @@ dmypy.json
 **.dll
 **.so
 **.dylib
+
+# uv lockfile
+uv.lock

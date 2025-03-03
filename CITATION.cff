@@ -7,7 +7,7 @@ version: 0.3.0.dev0
 date-released: '2023-04-19'
 abstract: An extension to xmipy for the MODFLOW API.
 repository-artifact: https://pypi.org/project/modflowapi
-repository-code: https://github.com/MODFLOW-USGS/modflowapi
+repository-code: https://github.com/MODFLOW-ORG/modflowapi
 license: CC0-1.0
 authors:
 - family-names: Hughes
