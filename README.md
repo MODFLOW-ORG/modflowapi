@@ -1,8 +1,8 @@
 # modflowapi
 
-[![CI](https://github.com/MODFLOW-USGS/modflowapi/actions/workflows/ci.yml/badge.svg)](https://github.com/MODFLOW-USGS/modflowapi/actions/workflows/ci.yml)
-[![GitHub contributors](https://img.shields.io/github/contributors/MODFLOW-USGS/modflowapi)](https://img.shields.io/github/contributors/MODFLOW-USGS/modflowapi)
-[![GitHub tag](https://img.shields.io/github/tag/MODFLOW-USGS/modflowapi.svg)](https://github.com/MODFLOW-USGS/modflowapi/tags/latest)
+[![CI](https://github.com/MODFLOW-ORG/modflowapi/actions/workflows/ci.yml/badge.svg)](https://github.com/MODFLOW-ORG/modflowapi/actions/workflows/ci.yml)
+[![GitHub contributors](https://img.shields.io/github/contributors/MODFLOW-ORG/modflowapi)](https://img.shields.io/github/contributors/MODFLOW-ORG/modflowapi)
+[![GitHub tag](https://img.shields.io/github/tag/MODFLOW-ORG/modflowapi.svg)](https://github.com/MODFLOW-ORG/modflowapi/tags/latest)
 
 [![PyPI License](https://img.shields.io/pypi/l/modflowapi)](https://pypi.python.org/pypi/modflowapi)
 [![PyPI Status](https://img.shields.io/pypi/status/modflowapi.png)](https://pypi.python.org/pypi/modflowapi)

@@ -109,7 +109,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
+          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
           pip install .[test]
 
       - name: Install modflow executables
@@ -150,7 +150,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
+          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
           pip install .[test]
 
       - name: Install modflow executables
@@ -184,7 +184,7 @@ jobs:
       - name: Checkout mf6-examples
         uses: actions/checkout@v4
         with:
-          repository: MODFLOW-USGS/modflow6-examples
+          repository: MODFLOW-ORG/modflow6-examples
           path: modflow6-examples
 
       - name: Setup Python
@@ -198,7 +198,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
+          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
           pip install git+https://git@github.com/modflowpy/flopy@develop
           pip install .[test]
 

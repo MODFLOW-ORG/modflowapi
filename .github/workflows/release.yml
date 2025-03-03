@@ -167,7 +167,7 @@ jobs:
   publish:
     name: Publish package
     # runs only after release is published (manually promoted from draft)
-    if: github.event_name == 'release' && github.repository_owner == 'MODFLOW-USGS'
+    if: github.event_name == 'release' && github.repository_owner == 'MODFLOW-ORG'
     runs-on: ubuntu-22.04
     permissions:
       contents: write
