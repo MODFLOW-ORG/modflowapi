@@ -31,17 +31,11 @@ jobs:
       with:
         python-version: 3.x
 
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
-
     - name: Base installation
-      run: |
-        pip install -e .
+      run: pip install -e .
         
     - name: Print version
-      run: |
-        python -c "import modflowapi; print(modflowapi.__version__)"
+      run: python -c "import modflowapi; print(modflowapi.__version__)"
 
   lint:
     name: lint
@@ -54,33 +48,27 @@ jobs:
         shell: bash
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # Standard python fails on Windows without GDAL installation. Using
     # standard python here since only linting on linux.
     # Use standard bash shell with standard python
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: 3.x
+        cache-dependency-glob: "**/pyproject.toml"
 
-    - name: Print python version
-      run: |
-        python --version
-
-    - name: Install Python packages
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[lint]
+    - name: Install
+      run: uv sync --group lint
 
     - name: Lint
-      run: ruff check .
+      run: uvx ruff check .
 
-    - name: Check format
-      run: ruff format . --check
+    - name: Format
+      run: uvx ruff format . --check
 
-    - name: Check spelling
-      run: codespell
+    - name: Spelling
+      run: uvx codespell
 
   autotest_extensions:
     name: modflowapi extensions autotests
@@ -96,21 +84,21 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: uv sync --group test
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
-          pip install .[test]
+          uv pip install git+https://git@github.com/Deltares/xmipy@develop
+          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
@@ -121,7 +109,7 @@ jobs:
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: pytest -v -n auto -m "not mf6"
+        run: uv run pytest -v -n auto -m "not mf6"
         
   autotest_preidm_extensions:
     name: modflowapi pre-idm extensions autotests
@@ -137,21 +125,21 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: uv sync --group test
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
-          pip install .[test]
+          uv pip install git+https://git@github.com/Deltares/xmipy@develop
+          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
@@ -187,23 +175,23 @@ jobs:
           repository: MODFLOW-ORG/modflow6-examples
           path: modflow6-examples
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: uv sync --group test
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
-          pip install git+https://git@github.com/modflowpy/flopy@develop
-          pip install .[test]
+          uv pip install git+https://git@github.com/Deltares/xmipy@develop
+          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
+          uv pip install git+https://git@github.com/modflowpy/flopy@develop
 
       - name: update flopy for mf6-examples
-        run: python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
+        run: uv run python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
 
       - name: Install modflow6 for modflow6-examples
         uses: modflowpy/install-modflow-action@v1
@@ -213,7 +201,7 @@ jobs:
       - name: Build mf6-examples
         working-directory: modflow6-examples/autotest
         run: |
-          pytest -v -n=auto --init test_scripts.py -k "not synthetic-valley"
+          uv run pytest -v -n=auto --init test_scripts.py -k "not synthetic-valley"
 
       - name: Install modflow6 nightly build
         uses: modflowpy/install-modflow-action@v1
@@ -224,4 +212,4 @@ jobs:
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: pytest -v -n=auto test_mf6_examples.py --mf6-examples-path=../modflow6-examples/examples
+        run: uv run pytest -v -n=auto test_mf6_examples.py --mf6-examples-path=../modflow6-examples/examples
