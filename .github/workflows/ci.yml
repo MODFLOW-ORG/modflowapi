@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.9, "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     defaults:
       run:
         shell: bash
@@ -131,7 +131,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-13, windows-latest ]
-        python-version: [ 3.9, "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     defaults:
       run:
         shell: bash
@@ -173,7 +173,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.9, "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     defaults:
       run:
         shell: bash

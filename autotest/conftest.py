@@ -23,8 +23,9 @@ def get_mf6_examples_path() -> Path:
     try:
         if not __mf6_examples_path.is_dir():
             __mf6_examples_path.mkdir(exist_ok=True)
+            import pdb; pdb.set_trace()
             download_and_unzip(
-                url="https://github.com/MODFLOW-ORG/modflow6-examples/releases/download/current/modflow6-examples.zip",
+                url="https://github.com/MODFLOW-ORG/modflow6-examples/releases/download/current/mf6examples.zip",
                 path=__mf6_examples_path,
                 verbose=True,
             )
