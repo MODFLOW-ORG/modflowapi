@@ -47,16 +47,10 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    # Standard python fails on Windows without GDAL installation. Using
-    # standard python here since only linting on linux.
-    # Use standard bash shell with standard python
     - name: Setup uv
       uses: astral-sh/setup-uv@v5
       with:
-        cache-dependency-glob: "**/pyproject.toml"
-
-    - name: Install
-      run: uv sync --group lint
+        enable-cache: false
 
     - name: Lint
       run: uvx ruff check .
@@ -90,7 +84,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install
-        run: uv sync --group test
+        run: uv sync --all-extras
 
       - name: Install Python dependencies
         run: |
@@ -131,7 +125,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install
-        run: uv sync --group test
+        run: uv sync --all-extras
 
       - name: Install Python dependencies
         run: |
@@ -179,7 +173,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install
-        run: uv sync --group test
+        run: uv sync --all-extras
 
       - name: Install Python dependencies
         run: |
