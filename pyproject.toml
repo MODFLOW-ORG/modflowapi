@@ -42,7 +42,7 @@ dependencies = [
 dev = ["modflowapi[test,lint]"]
 test = [
     "filelock",
-    "modflow-devtools",
+    "modflow-devtools[dfn] @ git+https://github.com/MODFLOW-USGS/modflow-devtools.git",
     "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
