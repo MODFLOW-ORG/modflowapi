@@ -72,6 +72,10 @@ packages = ["modflowapi"]
 [tool.hatch.version]
 path = "modflowapi/version.py"
 
+[tool.hatch.metadata]
+# temporary, until new devtools release
+allow-direct-references = true
+
 [tool.ruff]
 line-length = 88
 
