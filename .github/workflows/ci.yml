@@ -176,4 +176,9 @@ jobs:
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: uv run pytest -v -n auto test_mf6_examples.py
+        run: |
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            uv run pytest -v test_mf6_examples.py
+          else
+            uv run pytest -v -n auto test_mf6_examples.py
+          fi
