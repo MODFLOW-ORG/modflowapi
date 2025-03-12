@@ -4,13 +4,11 @@ on:
   schedule:
     - cron: '0 8 * * *' # run at 8 AM UTC (12 am PST)
   push:
-    branches:
-      - main
-      - develop
-      - 'release*'
   pull_request:
     branches: [main, develop]
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
 
   std_setup:
@@ -24,7 +22,7 @@ jobs:
     steps:
 
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v5
@@ -158,13 +156,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Checkout mf6-examples
         uses: actions/checkout@v4
-        with:
-          repository: MODFLOW-ORG/modflow6-examples
-          path: modflow6-examples
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
@@ -175,25 +167,6 @@ jobs:
       - name: Install
         run: uv sync --all-extras
 
-      - name: Install Python dependencies
-        run: |
-          uv pip install git+https://git@github.com/Deltares/xmipy@develop
-          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
-          uv pip install git+https://git@github.com/modflowpy/flopy@develop
-
-      - name: update flopy for mf6-examples
-        run: uv run python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
-
-      - name: Install modflow6 for modflow6-examples
-        uses: modflowpy/install-modflow-action@v1
-        with:
-          path: ${{ github.workspace }}/modflow6-examples/autotest
-
-      - name: Build mf6-examples
-        working-directory: modflow6-examples/autotest
-        run: |
-          uv run pytest -v -n=auto --init test_scripts.py -k "not synthetic-valley"
-
       - name: Install modflow6 nightly build
         uses: modflowpy/install-modflow-action@v1
         with:
@@ -203,4 +176,4 @@ jobs:
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: uv run pytest -v -n=auto test_mf6_examples.py --mf6-examples-path=../modflow6-examples/examples
+        run: uv run pytest -v -n auto test_mf6_examples.py

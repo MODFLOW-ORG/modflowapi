@@ -138,3 +138,6 @@ dmypy.json
 
 # uv lockfile
 uv.lock
+
+# temporary test folders
+autotest/temp/**
