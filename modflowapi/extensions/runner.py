@@ -110,6 +110,8 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
 
             callback(sim_grp, Callbacks.timestep_end)
             mf6.finalize_solve(sol_id)
+            if sim_grp.nstp == sim_grp.kstp + 1:
+                callback(sim_grp, Callbacks.stress_period_end)
 
         mf6.finalize_time_step()
         current_time = mf6.get_current_time()
@@ -117,8 +119,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         if not has_converged:
             print(f"Simulation group: {sim_grp} DID NOT CONVERGE")
 
-        if sim_grp.nstp == sim_grp.kstp + 1:
-            callback(sim_grp, Callbacks.stress_period_end)
+
 
     try:
         callback(sim, Callbacks.finalize)
