@@ -119,7 +119,6 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         if not has_converged:
             print(f"Simulation group: {sim_grp} DID NOT CONVERGE")
 
-
     try:
         callback(sim, Callbacks.finalize)
         mf6.finalize()
