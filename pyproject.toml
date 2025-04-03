@@ -58,6 +58,15 @@ lint = [
     "codespell[toml] >=2.2.2",
     "ruff",
 ]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "jupyter",
+    "jupytext",
+    "nbsphinx",
+    "ipython"
+]
 
 [project.urls]
 Repository = "https://github.com/MODFLOW-ORG/modflowapi"

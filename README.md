@@ -55,7 +55,9 @@ conda install -c conda-forge modflowapi
 
 ## Documentation
 
-Examples using `modflowapi` and its extensions can be found in the [Quickstart](examples/notebooks/Quickstart.ipynb) and the [Extensions](examples/notebooks/MODFLOW-API_extensions_objects.ipynb) notebooks. An example of using the MODFLOW API to monitor heads during a simulation can be found in the [Head Monitor Example](examples/notebooks/Head_Monitor_Example.ipynb) Notebook. 
+Documentation is available [on ReadTheDocs](modflowapi.readthedocs.io).
+
+Examples using `modflowapi` and its extensions can be found in the [Quickstart](docs/examples/notebooks/Quickstart.ipynb) and the [Extensions](docs/examples/notebooks/MODFLOW-API_extensions_objects.ipynb) notebooks. An example of using the MODFLOW API to monitor heads during a simulation can be found in the [Head Monitor Example](docs/examples/notebooks/Head_Monitor_Example.ipynb) Notebook. 
 
 For more info on MODFLOW 6 see [the USGS overview](https://water.usgs.gov/ogw/modflow/).
 
