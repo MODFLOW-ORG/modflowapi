@@ -59,13 +59,14 @@ lint = [
     "ruff",
 ]
 docs = [
+    "modflowapi[test]",
     "sphinx",
     "sphinx-rtd-theme",
     "myst-parser",
     "jupyter",
     "jupytext",
     "nbsphinx",
-    "ipython"
+    "ipython",
 ]
 
 [project.urls]
