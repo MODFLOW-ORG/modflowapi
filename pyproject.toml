@@ -67,6 +67,7 @@ docs = [
     "jupytext",
     "nbsphinx",
     "ipython",
+    "flopy",
 ]
 
 [project.urls]
