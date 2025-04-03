@@ -4,10 +4,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
-from pathlib import Path
-from flopy.utils.get_modflow import run_main as get_modflow
 import sys
-sys.path.insert(0, os.path.abspath('../'))
+from pathlib import Path
+
+from flopy.utils.get_modflow import run_main as get_modflow
+
+sys.path.insert(0, os.path.abspath("../"))
 from modflowapi import __version__
 
 # -- Determine if this is a development or release version ------------------
@@ -33,7 +35,7 @@ html_static_path = ["_static"]
 
 # -- nbsphinx configuration -------------------------------------------------
 nbsphinx_custom_formats = {
-    '.py': ['jupytext.reads', {'fmt': 'py:light'}],
+    ".py": ["jupytext.reads", {"fmt": "py:light"}],
 }
 
 # -- Install MODFLOW --------------------------------------------------------
