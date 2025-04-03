@@ -24,9 +24,7 @@ class ListInput(object):
             self.mf6 = self.parent.model.mf6
         else:
             if var_addrs is None or mf6 is None:
-                raise AssertionError(
-                    "var_addrs and mf6 must be supplied if parent is None"
-                )
+                raise AssertionError("var_addrs and mf6 must be supplied if parent is None")
             self.var_addrs = var_addrs
             self.mf6 = mf6
 
@@ -43,17 +41,9 @@ class ListInput(object):
         if self.parent._idm_enabled:
             for var in ("BOUND", "AUXVAR"):
                 self.var_addrs.pop(
-                    self.var_addrs.index(
-                        self.mf6.get_var_address(
-                            var, self.parent.model.name, self.parent.pkg_name
-                        )
-                    )
+                    self.var_addrs.index(self.mf6.get_var_address(var, self.parent.model.name, self.parent.pkg_name))
                 )
-            self.var_addrs.append(
-                self.mf6.get_var_address(
-                    "AUXVAR_IDM", self.parent.model.name, self.parent.pkg_name
-                )
-            )
+            self.var_addrs.append(self.mf6.get_var_address("AUXVAR_IDM", self.parent.model.name, self.parent.pkg_name))
             self._set_stress_period_data_idm()
         else:
             self._set_stress_period_data()
@@ -194,9 +184,7 @@ class ListInput(object):
                 if name in self._nodevars:
                     values -= 1
                     values = self.parent.model.nodetouser[values]
-                    values = list(
-                        zip(*np.unravel_index(values, self.parent.model.shape))
-                    )
+                    values = list(zip(*np.unravel_index(values, self.parent.model.shape)))
 
                 values = values[0 : self._nbound[0]]
                 recarray[name][0 : self._nbound[0]] = values
@@ -221,8 +209,7 @@ class ListInput(object):
         if len(recarray) != self._nbound:
             if len(recarray) > self._maxbound[0]:
                 raise AssertionError(
-                    f"Length of stresses ({len(recarray)},) cannot be larger "
-                    f"than maxbound value ({self._maxbound[0]},)"
+                    f"Length of stresses ({len(recarray)},) cannot be larger than maxbound value ({self._maxbound[0]},)"
                 )
             self._nbound[0] = len(recarray)
 
@@ -381,8 +368,7 @@ class ArrayPointer:
         if not self.parent._sim_package:
             if array.size != self.parent.model.size:
                 raise ValueError(
-                    f"{self.name} size {array.size} is not equal to "
-                    f"modflow variable size {self.parent.model.size}"
+                    f"{self.name} size {array.size} is not equal to modflow variable size {self.parent.model.size}"
                 )
 
             array = array.ravel()
@@ -420,9 +406,7 @@ class ArrayInput:
             self.mf6 = self.parent.model.mf6
         else:
             if var_addrs is None or mf6 is None:
-                raise AssertionError(
-                    "var_addrs and mf6 must be supplied if parent is None"
-                )
+                raise AssertionError("var_addrs and mf6 must be supplied if parent is None")
             self.var_addrs = var_addrs
             self.mf6 = mf6
 
@@ -602,13 +586,9 @@ class AdvancedInput(object):
 
         if not self.parent._sim_package:
             if self.parent is not None:
-                var_addr = self.mf6.get_var_address(
-                    name.upper(), self.parent.model.name, self.parent.pkg_name
-                )
+                var_addr = self.mf6.get_var_address(name.upper(), self.parent.model.name, self.parent.pkg_name)
             else:
-                var_addr = self.mf6.get_var_address(
-                    name.upper(), model.upper(), package.upper()
-                )
+                var_addr = self.mf6.get_var_address(name.upper(), model.upper(), package.upper())
         else:
             if self.parent is not None:
                 var_addr = self.mf6.get_var_address(name.upper(), self.parent.pkg_name)
@@ -656,16 +636,13 @@ class AdvancedInput(object):
 
         if values0.shape != values.shape:
             raise ValueError(
-                f"Array shapes are incompatible: "
-                f"current shape={values.shape}, valid shape={values0.shape}"
+                f"Array shapes are incompatible: current shape={values.shape}, valid shape={values0.shape}"
             )
 
         if name.lower() not in self._ptrs:
             # this is a set value situation
             self.mf6.set_value(
-                self.mf6.get_var_address(
-                    name.upper(), self.parent.model.name, self.parent.pkg_name
-                ),
+                self.mf6.get_var_address(name.upper(), self.parent.model.name, self.parent.pkg_name),
                 values,
             )
         else:
@@ -697,9 +674,7 @@ class ScalarInput:
             self.mf6 = self.parent.model.mf6
         else:
             if var_addrs is None or mf6 is None:
-                raise AssertionError(
-                    "var_addrs and mf6 must be supplied if parent is None"
-                )
+                raise AssertionError("var_addrs and mf6 must be supplied if parent is None")
             self.var_addrs = var_addrs
             self.mf6 = mf6
 

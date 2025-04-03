@@ -29,10 +29,7 @@ def update_version_txt(version: Version):
 
 def update_version_py(timestamp: datetime, version: Version):
     with open(_version_py_path, "w") as f:
-        f.write(
-            f"# {_project_name} version file automatically "
-            f"created using...{basename(__file__)}\n"
-        )
+        f.write(f"# {_project_name} version file automatically created using...{basename(__file__)}\n")
         f.write(f"# created on...{timestamp.strftime('%B %d, %Y %H:%M:%S')}\n")
         f.write(f'__version__ = "{version}"\n')
     log_update(_version_py_path, version)
@@ -53,11 +50,7 @@ def update_version(timestamp: datetime = datetime.now(), version: Version = None
     try:
         lock = FileLock(lock_path)
         previous = Version(_version_txt_path.read_text().strip())
-        version = (
-            version
-            if version
-            else Version(previous.major, previous.minor, previous.patch)
-        )
+        version = version if version else Version(previous.major, previous.minor, previous.patch)
 
         with lock:
             update_version_txt(version)
@@ -84,9 +77,7 @@ if __name__ == "__main__":
             """
         ),
     )
-    parser.add_argument(
-        "-v", "--version", required=False, help="Specify the release version"
-    )
+    parser.add_argument("-v", "--version", required=False, help="Specify the release version")
     parser.add_argument(
         "-g",
         "--get",

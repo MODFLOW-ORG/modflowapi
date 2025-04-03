@@ -14,7 +14,9 @@
 
 # # MODFLOW-API Head monitor example
 #
-# In this example the modflow-api is used in a more complex callback function to create a Head Monitor that updates at the timestep level. This example reverses `CHD` boundary conditions each stress period on a simple 10 x 10 model and displays the head results for each timestep.
+# In this example the modflow-api is used in a more complex callback function to create a Head Monitor
+# that updates at the timestep level. This example reverses `CHD` boundary conditions each stress period
+# on a simple 10 x 10 model and displays the head results for each timestep.
 #
 
 # +
@@ -29,12 +31,12 @@ from IPython.display import clear_output, display
 # remove this import if adapted to python script
 from modflowapi import Callbacks, run_simulation
 
-
 # -
 
 # First we create a class to hold a callback function.
 #
 # This class handles changing the `CHD` boundary condition as well as updating the matplotlib plot.
+
 
 class StructuredHeadMonitor:
     """
@@ -80,9 +82,7 @@ class StructuredHeadMonitor:
         top = ml.dis.top.values[0]
         botm = ml.dis.bot.values
         idomain = ml.dis.idomain.values
-        self.modelgrid = StructuredGrid(
-            delc=delc, delr=delr, top=top, botm=botm, idomain=idomain
-        )
+        self.modelgrid = StructuredGrid(delc=delc, delr=delr, top=top, botm=botm, idomain=idomain)
 
     def initialize_plot(self):
         """
@@ -171,5 +171,3 @@ hdmon = StructuredHeadMonitor(layer=0, vmin=70, vmax=95)
 dll = "libmf6"
 sim_ws = Path("../data/dis_model")
 run_simulation(dll, sim_ws, hdmon.callback, verbose=True)
-
-
