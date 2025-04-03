@@ -9,7 +9,7 @@ from modflow_devtools.misc import set_dir
 from modflowapi import Callbacks, ModflowApi, run_simulation
 from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
 
-data_pth = Path("../examples/data")
+data_pth = Path("../docs/examples/data")
 pytestmark = pytest.mark.extensions
 os = system()
 so = "libmf6" + (".so" if os == "Linux" else ".dylib" if os == "Darwin" else ".dll" if os == "Windows" else None)
