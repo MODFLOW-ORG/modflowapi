@@ -308,9 +308,7 @@ class ApiSimulation:
 
         idp_names = [i for i in mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES")]
         solution_types = [
-            i[:-1].lower()
-            for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE"))
-            if idp_names[ix]
+            i[:-1].lower() for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE")) if idp_names[ix]
         ]
 
         tmpmdl = ApiMbase(mf6, "", {})
@@ -334,9 +332,7 @@ class ApiSimulation:
         for variable in variables:
             if variable.startswith("ATS"):
                 ats_constructor = package_factory("ats", ListPackage)
-                ats = ats_constructor(
-                    ListPackage, tmpmdl, "ats", "ats", sim_package=True
-                )
+                ats = ats_constructor(ListPackage, tmpmdl, "ats", "ats", sim_package=True)
                 break
 
         # get the exchanges

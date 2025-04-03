@@ -14,13 +14,17 @@
 
 # # MODFLOW API Quickstart
 #
-# This notebook presents a quickstart guide to working with the modflowapi package through the extension modules. This quickstart guide serves as a roadmap for user development of custom callback functions. For a detailed explanation of the `modflowapi.extensions` objects that are accessible through a callback function, see the notebook `MODFLOW-API extensions objects.ipynb` 
+# This notebook presents a quickstart guide to working with the modflowapi package through the extension modules.
+# This quickstart guide serves as a roadmap for user development of custom callback functions. For a detailed
+# explanation of the `modflowapi.extensions` objects that are accessible through a callback function, see the
+# notebook `MODFLOW-API extensions objects.ipynb`.
 
 # +
 from pathlib import Path
 
 import modflowapi
 from modflowapi import Callbacks
+
 # -
 
 # Define paths to the modflow6 api shared library
@@ -35,17 +39,31 @@ dll = Path("./libmf6")
 
 # First we create a callback function for adjusting model data.
 #
-# The callback function allows users to wrap function that updates the modflow model at different steps. The `modflowapi.Callbacks` object allows users to find the particular solution step that they are currently in. `modflowapi.Callbacks` includes:
+# The callback function allows users to wrap function that updates the modflow model at different steps.
+# The `modflowapi.Callbacks` object allows users to find the particular solution step that they are
+# currently in. `modflowapi.Callbacks` includes:
 #
-#    - `Callbacks.initialize`: the initialize callback sends loaded simulation data back to the user to make adjustments before the model begins solving. This callback only occurs once at the beginning of the MODFLOW6 simulation
-#    - `Callbacks.stress_period_start`: the stress_period_start callback sends simulation data for each solution group to the user to make adjustments to stress packages at the beginning of each stress period.
-#    - `Callbacks.stress_period_end`: the stress_period_end callback sends simulation data for each solution group to the user at the end of each stress period. This can be useful for writing custom output and coupling models
-#    - `Callbacks.timestep_start`: the timestep_start callback sends simulation data for each solution group to the user to make adjustments to stress packages at the beginning of each timestep.
-#    - `Callbacks.timestep_end`: the timestep_end callback sends simulation data for each solution group to the user at the end of each timestep. This can be useful for writing custom output and coupling models
-#    - `Callbacks.iteration_start`: the iteration_start callback sends simulation data for each solution group to the user to make adjustments to stress packages at the beginning of each outer solution iteration.
-#    - `Callbacks.iteration_end`: the iteration_end callback sends simulation data for each solution group to the user to make adjustments to stress packages and check values of stress packages at the end of each outer solution iteration.
-#    
+#    - `Callbacks.initialize`: the initialize callback sends loaded simulation data back to the user to
+#       make adjustments before the model begins solving. This callback only occurs once at the beginning
+#       of the MODFLOW6 simulation.
+#    - `Callbacks.stress_period_start`: the stress_period_start callback sends simulation data for each
+#       solution group to the user to make adjustments to stress packages at the beginning of each stress
+#       period.
+#    - `Callbacks.stress_period_end`: the stress_period_end callback sends simulation data for each solution
+#       group to the user at the end of each stress period. This can be useful for writing custom output
+#       and coupling models.
+#    - `Callbacks.timestep_start`: the timestep_start callback sends simulation data for each solution group
+#       to the user to make adjustments to stress packages at the beginning of each timestep.
+#    - `Callbacks.timestep_end`: the timestep_end callback sends simulation data for each solution group to
+#       the user at the end of each timestep. This can be useful for writing custom output and coupling models.
+#    - `Callbacks.iteration_start`: the iteration_start callback sends simulation data for each solution group
+#       to the user to make adjustments to stress packages at the beginning of each outer solution iteration.
+#    - `Callbacks.iteration_end`: the iteration_end callback sends simulation data for each solution group to
+#       the user to make adjustments to stress packages and check values of stress packages at the end of each
+#       outer solution iteration.
+#
 # The user can use any of these callbacks within their callback function.
+
 
 def callback_function(sim, callback_step):
     """
@@ -85,5 +103,3 @@ def callback_function(sim, callback_step):
 # The callback function is then passed to `modflowapi.run_simulation`
 
 modflowapi.run_simulation(dll, sim_ws, callback_function, verbose=False)
-
-

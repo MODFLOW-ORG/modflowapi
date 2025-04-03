@@ -293,9 +293,7 @@ class ApiModel(ApiMbase):
             shape_vars = gridshape[self.dis_type]
             shape = []
             for var in shape_vars:
-                var_addr = self.mf6.get_var_address(
-                    var.upper(), self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address(var.upper(), self.name, self.dis_name)
                 if var_addr in ivn:
                     shape.append(self.mf6.get_value(var_addr)[0])
             if not shape:
@@ -356,13 +354,9 @@ class ApiModel(ApiMbase):
             nodeuser = np.arange(nodes).astype(int)
             nodereduced = np.copy(nodeuser)
         else:
-            nodeuser_addr = self.mf6.get_var_address(
-                "NODEUSER", self.name, self.dis_name
-            )
+            nodeuser_addr = self.mf6.get_var_address("NODEUSER", self.name, self.dis_name)
             nodeuser = self.mf6.get_value(nodeuser_addr) - 1
-            nodereduced_addr = self.mf6.get_var_address(
-                "NODEREDUCED", self.name, self.dis_name
-            )
+            nodereduced_addr = self.mf6.get_var_address("NODEREDUCED", self.name, self.dis_name)
             nodereduced = self.mf6.get_value(nodereduced_addr) - 1
 
         self._nodetouser = nodeuser
