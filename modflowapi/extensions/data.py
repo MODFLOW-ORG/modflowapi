@@ -3,7 +3,7 @@ import pandas as pd
 import xmipy.errors
 
 
-class ListInput(object):
+class ListInput:
     """
     Data object for storing pointers and working with list based input data
 
@@ -15,24 +15,30 @@ class ListInput(object):
         optional list of variable addresses
     mf6 : ModflowApi, None
         optional ModflowApi object
+    spd : bool
+        flag to indicate if the block is loading stress period data or other
+        list based block data.
     """
 
-    def __init__(self, parent, var_addrs=None, mf6=None):
+    def __init__(self, parent, var_addrs=None, mf6=None, spd=True):
         self.parent = parent
+        self.var_addrs = var_addrs
         if self.parent is not None:
-            self.var_addrs = self.parent.var_addrs
+            if var_addrs is None:
+                self.var_addrs = self.parent.var_addrs
             self.mf6 = self.parent.model.mf6
         else:
             if var_addrs is None or mf6 is None:
                 raise AssertionError(
                     "var_addrs and mf6 must be supplied if parent is None"
                 )
-            self.var_addrs = var_addrs
+
             self.mf6 = mf6
 
         self._ptrs = {}
+        self._compound_ptrs = {}
         self._nodevars = ("nodelist", "nexg", "maxats")
-        self._boundvars = ("bound",)
+        self._bound = "bound"
 
         self._maxbound = [
             0,
@@ -43,9 +49,12 @@ class ListInput(object):
         self._naux = [
             0,
         ]
+        self._auxvar_name = "auxvar"
         self._auxnames = []
         self._dtype = []
         self._reduced_to_var_addr = {}
+
+        self._spd = spd
         if self.parent._idm_enabled:
             for var in ("BOUND", "AUXVAR"):
                 self.var_addrs.pop(
@@ -60,11 +69,10 @@ class ListInput(object):
                     "AUXVAR_IDM", self.parent.model.name, self.parent.pkg_name
                 )
             )
-            self._set_stress_period_data_idm()
-        else:
-            self._set_stress_period_data()
 
-    def _set_stress_period_data_idm(self):
+        self._set_data()
+
+    def _set_data(self):
         """
         Method to set stress period data variable pointers to the _ptrs
         dictionary. Uses IDM updates instead of bound to access variable
@@ -72,95 +80,80 @@ class ListInput(object):
         """
         # for now we need to add self.parent._bound_vars data to var_addrs
         for var_addr in self.var_addrs:
-            try:
-                values = self.mf6.get_value_ptr(var_addr)
-            except xmipy.errors.InputError:
-                if self._naux[0] > 0:
-                    values = self.mf6.get_value(var_addr)
-                else:
+            if ":" in var_addr:
+                addr_pieces = var_addr.split("/")
+                compound = addr_pieces[-1]
+                addr_pieces = addr_pieces[:-1]
+                reduced, ctype, ptr_var = [i.lower() for i in compound.split(":")]
+                addr_pieces.append(ptr_var.upper())
+                var_addr = "/".join(addr_pieces)
+
+                try:
+                    values = self.mf6.get_value_ptr(var_addr)
+                except xmipy.errors.InputError:
                     continue
 
-            reduced = var_addr.split("/")[-1].lower()
-            if reduced in ("maxbound", "nbound"):
-                setattr(self, f"_{reduced}", values)
-            elif reduced in ("nexg", "maxats"):
-                setattr(self, "_maxbound", values)
-                setattr(self, "_nbound", values)
-            elif reduced in ("naux",):
-                setattr(self, "_naux", values)
-            elif reduced in ("auxname_cst"):
-                setattr(self, "_auxnames", list(values))
-            else:
-                self._ptrs[reduced] = values
-                self._reduced_to_var_addr[reduced] = var_addr
-                if reduced in self.parent._bound_vars:
+                if reduced in ("ndiv",):
+                    nbound = self._special_condition_to_values(ctype, values)
+                    setattr(self, "_maxbound", [len(values),])
+                    setattr(self, "_nbound", [nbound,])
+                else:
+                    self._compound_ptrs[ptr_var] = values
+                    self._ptrs[reduced] = f"{ctype}:{ptr_var}"
+
                     typ_str = values.dtype.str
                     dtype = (reduced, typ_str)
                     self._dtype.append(dtype)
-                elif reduced in self._nodevars:
-                    dtype = (reduced, "O")
-                    self._dtype.append(dtype)
-                elif reduced == "auxvar_idm":
-                    if self._naux == 0:
-                        continue
+            else:
+                try:
+                    values = self.mf6.get_value_ptr(var_addr)
+                except xmipy.errors.InputError:
+                    if self._naux[0] > 0:
+                        values = self.mf6.get_value(var_addr)
                     else:
-                        for ix in range(self._naux[0]):
+                        continue
+
+                reduced = var_addr.split("/")[-1].lower()
+                if reduced in ("maxbound", "nbound"):
+                    setattr(self, f"_{reduced}", values)
+                    if not self._spd and reduced == "maxbound":
+                        self._nbound = values
+                elif reduced in ("nexg", "maxats",):
+                    setattr(self, "_maxbound", values)
+                    setattr(self, "_nbound", values)
+                elif reduced in ("naux",):
+                    setattr(self, "_naux", values)
+                elif reduced in ("auxname_cst"):
+                    setattr(self, "_auxnames", list(values))
+                else:
+                    self._ptrs[reduced] = values
+                    self._reduced_to_var_addr[reduced] = var_addr
+                    if reduced == self._bound:
+                        # retain this method for advanced packages
+                        for name in self.parent._bound_vars:
                             typ_str = values.dtype.str
-                            dtype = (self._auxnames[ix], typ_str)
+                            dtype = (name, typ_str)
                             self._dtype.append(dtype)
-                else:
-                    typ_str = values.dtype.str
-                    dtype = (reduced, typ_str)
-                    self._dtype.append(dtype)
-
-    def _set_stress_period_data(self):
-        """
-        Method to set stress period data variable pointers to the _ptrs
-        dictionary
-
-        PENDING DEPRECATION AND REPLACEMENT by _set_stress_period_data_idm()
-        """
-        for var_addr in self.var_addrs:
-            try:
-                values = self.mf6.get_value_ptr(var_addr)
-            except xmipy.errors.InputError:
-                if self._naux[0] > 0:
-                    values = self.mf6.get_value(var_addr)
-                else:
-                    continue
-            reduced = var_addr.split("/")[-1].lower()
-            if reduced in ("maxbound", "nbound"):
-                setattr(self, f"_{reduced}", values)
-            elif reduced in ("nexg", "maxats"):
-                setattr(self, "_maxbound", values)
-                setattr(self, "_nbound", values)
-            elif reduced in ("naux",):
-                setattr(self, "_naux", values)
-            elif reduced in ("auxname_cst"):
-                setattr(self, "_auxnames", list(values))
-            else:
-                self._ptrs[reduced] = values
-                self._reduced_to_var_addr[reduced] = var_addr
-                if reduced in self._boundvars:
-                    for name in self.parent._bound_vars:
+                    if reduced in self.parent._bound_vars:
                         typ_str = values.dtype.str
-                        dtype = (name, typ_str)
+                        dtype = (reduced, typ_str)
                         self._dtype.append(dtype)
-                elif reduced in self._nodevars:
-                    dtype = (reduced, "O")
-                    self._dtype.append(dtype)
-                elif reduced == "auxvar":
-                    if self._naux == 0:
-                        continue
+                    elif reduced in self._nodevars:
+                        dtype = (reduced, "O")
+                        self._dtype.append(dtype)
+                    elif "auxvar" in reduced:
+                        self._auxvar_name = reduced #  == "auxvar_idm":
+                        if self._naux == 0:
+                            continue
+                        else:
+                            for ix in range(self._naux[0]):
+                                typ_str = values.dtype.str
+                                dtype = (self._auxnames[ix], typ_str)
+                                self._dtype.append(dtype)
                     else:
-                        for ix in range(self._naux[0]):
-                            typ_str = values.dtype.str
-                            dtype = (self._auxnames[ix], typ_str)
-                            self._dtype.append(dtype)
-                else:
-                    typ_str = values.dtype.str
-                    dtype = (reduced, typ_str)
-                    self._dtype.append(dtype)
+                        typ_str = values.dtype.str
+                        dtype = (reduced, typ_str)
+                        self._dtype.append(dtype)
 
     def _ptr_to_recarray(self):
         """
@@ -174,23 +167,33 @@ class ListInput(object):
             return
         recarray = np.recarray((self._nbound[0],), self._dtype)
         for name, ptr in self._ptrs.items():
-            if "auxvar" in name and self._naux[0] == 0:
+            if name == self._auxvar_name and self._naux[0] == 0:
                 continue
-            values = np.copy(ptr)
-            if name in self._boundvars:
-                # note: block slated for deprecation
+
+            if isinstance(ptr, str):
+                # special condition and not a real ptr
+                ctype, ptr_name = ptr.split(":")
+                ptr_vals = self._compound_ptrs[ptr_name]
+                values = self._special_condition_to_values(ctype, ptr_vals)
+            else:
+                values = np.copy(ptr)
+
+            if name == self._bound:
+                # note: keep block around for advanced packages
                 for ix, nm in enumerate(self.parent._bound_vars):
-                    bnd_values = values[0 : self._nbound[0], ix]
-                    recarray[nm][0 : self._nbound[0]] = bnd_values
+                    bnd_values = values[0: self._nbound[0], ix]
+                    recarray[nm][0: self._nbound[0]] = bnd_values
+
             elif name in self.parent._bound_vars and self.parent._idm_enabled:
-                # new IDM simplification method
-                bnd_values = values[0 : self._nbound[0]].ravel()
-                recarray[name][0 : self._nbound[0]] = bnd_values
-            elif "auxvar" in name:
+                # IDM simplification method
+                bnd_values = values[0: self._nbound[0]].ravel()
+                recarray[name][0: self._nbound[0]] = bnd_values
+
+            elif name == self._auxvar_name:
                 for ix in range(self._naux[0]):
                     nm = self._auxnames[ix]
-                    aux_values = values[0 : self._nbound[0], ix]
-                    recarray[nm][0 : self._nbound[0]] = aux_values
+                    aux_values = values[0: self._nbound[0], ix]
+                    recarray[nm][0: self._nbound[0]] = aux_values
 
             elif name == "auxname_cst":
                 pass
@@ -204,8 +207,11 @@ class ListInput(object):
                         zip(*np.unravel_index(values, self.parent.model.shape))
                     )
 
-                values = values[0 : self._nbound[0]]
-                recarray[name][0 : self._nbound[0]] = values
+                elif name in ("idv", "divreach"):
+                    values -= 1
+
+                values = values[0: self._nbound[0]]
+                recarray[name][0: self._nbound[0]] = values
 
         return recarray
 
@@ -220,11 +226,12 @@ class ListInput(object):
             numpy recarray of stress period data
 
         """
+
         if recarray is None:
             self._nbound[0] = 0
             return
 
-        if len(recarray) != self._nbound:
+        if len(recarray) != self._nbound[0]:
             if len(recarray) > self._maxbound[0]:
                 raise AssertionError(
                     f"Length of stresses ({len(recarray)},) cannot be larger "
@@ -235,7 +242,10 @@ class ListInput(object):
             if len(recarray) == 0:
                 return
 
+        visited = []
         for name in recarray.dtype.names:
+            if name in visited:
+                continue
             if name in self._nodevars:
                 multi_index = tuple(
                     np.array([list(i) for i in recarray[name]]).T
@@ -244,32 +254,110 @@ class ListInput(object):
                     multi_index, self.parent.model.shape
                 )
                 recarray[name] = self.parent.model.usertonode[nodes] + 1
+                visited.append(name)
 
-            if name in self.parent._bound_vars:
-                if "bound" in self._ptrs:
-                    # Block slated for deprecation after IDM inclusion
-                    idx = self.parent._bound_vars.index(name)
-                    bname = "bound"
-                    self._ptrs[bname][0 : self._nbound[0], idx] = recarray[
-                        name
-                    ]
-                elif self.parent._idm_enabled:
-                    # new IDM simplification
-                    self._ptrs[name][0 : self._nbound[0]] = recarray[
-                        name
-                    ].ravel()
-                else:
-                    pass
+            if name in ("divreach",):
+                self._ptrs[name][0: self._nbound[0]] = recarray[name].ravel() + 1
+                visited.append(name)
+
+            elif self._bound in self._ptrs and name in self.parent._bound_vars:
+                # Check for bound to support advanced packages
+                idx = self.parent._bound_vars.index(name)
+                self._ptrs[self._bound[0]][0: self._nbound[0], idx] = recarray[name]
+                visited.append(name)
+
             elif name in self._auxnames:
-                ptr_name = "auxvar"
-                if self.parent._idm_enabled:
-                    ptr_name += "_idm"
+                ptr_name = self._auxvar_name
                 idx = self._auxnames.index(name)
-                self._ptrs[ptr_name][0 : self._nbound[0], idx] = recarray[name]
+                self._ptrs[ptr_name][0: self._nbound[0], idx] = recarray[name]
+                visited.append(name)
+
             elif name == "auxname_cst":
                 pass
+
             else:
-                self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel()
+                if isinstance(self._ptrs[name], str):
+                    visited = self._special_condition_to_ptr(recarray, name, visited)
+                else:
+                    self._ptrs[name][0: self._nbound[0]] = recarray[name].ravel()
+                    visited.append(name)
+
+    def _special_condition_to_values(self, ctype, inval):
+        """
+
+        Parameters
+        ----------
+        sp_cond
+
+        Returns
+        -------
+        """
+        functions = {
+            "range": lambda x: np.arange(0, int(x), dtype=int),
+            "count_nonzero": lambda x: np.count_nonzero(x),
+            "where_idx": lambda x: np.array(np.where(x)[0]),
+            "where_val": lambda x: x[x != 0],
+        }
+        ctype = ctype.lower()
+        if ctype in ("range",):
+            inval = inval[0]
+
+        func = functions[ctype]
+        outval = func(inval)
+        return outval
+
+    def _special_condition_to_ptr(self, recarray, name, visited):
+        """
+
+        Parameters
+
+
+        Returns
+        -------
+
+        """
+        functions = {
+            "range": lambda x: [len(x),],
+        }
+        ctype, ptr_name = self._ptrs[name].split(":")
+        if "where" in ctype:
+            idx_name = None
+            val_name = None
+            if ctype == "where_idx":
+                idx_name = name
+                for k, v in self._ptrs.items():
+                    if isinstance(v, str):
+                        if v == f"where_val:{ptr_name}":
+                            val_name = k
+                            break
+
+            elif ctype == "where_val":
+                val_name = name
+                for k, v in self._ptrs.items():
+                    if isinstance(v, str):
+                        if v == f"where_idx:{ptr_name}":
+                            idx_name = k
+                            break
+            else:
+                return
+
+            if idx_name is None or val_name is None:
+                return
+
+            idx = list(recarray[idx_name].astype(int))
+            vals = recarray[val_name].ravel()
+            if val_name in ("idv",):
+                vals += 1
+            self._compound_ptrs[ptr_name][idx] = vals
+            visited.extend([idx_name, val_name])
+
+        else:
+            func = functions[ctype]
+            values = func(recarray[name])
+            self._compound_ptrs[ptr_name][:] = values[:]
+            visited.append(name)
+
+        return visited
 
     def __getitem__(self, item):
         recarray = self._ptr_to_recarray()

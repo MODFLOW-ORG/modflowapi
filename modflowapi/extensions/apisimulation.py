@@ -315,7 +315,7 @@ class ApiSimulation:
             if idp_names[ix]
         ]
 
-        tmpmdl = ApiMbase(mf6, "", {})
+        tmpmdl = ApiMbase(mf6, "")
         solution_names = list(set(solution_names))
         solution_dict = {}
         for name in solution_names:
