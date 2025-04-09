@@ -272,7 +272,8 @@ class ListInput:
                 if isinstance(self._ptrs[name], str):
                     visited = self._special_condition_to_ptr(recarray, name, visited)
                 else:
-                    self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel()
+                    shape = self._ptrs[name][0 : self._nbound[0]].shape
+                    self._ptrs[name][0 : self._nbound[0]] = recarray[name].reshape(shape)
                     visited.append(name)
 
     def _special_condition_to_values(self, ctype, inval):
