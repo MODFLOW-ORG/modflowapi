@@ -87,7 +87,7 @@ class MawPackage:
         super().__init__(model, pkg_type, pkg_name, sim_package)
 
 
-class UzfPackage:
+class UzfPackage(AdvancedPackage):
     """
     Container for UZF and UZF like packages
 

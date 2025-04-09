@@ -246,12 +246,35 @@ adv_pkgvars = {
                 ("ifno", "sfrsetting", "setting_0", "setting_1"),
             ),
         ],
-    }
+    },
+    "uzf": {
+        "packagedata": [
+            "maxbound",
+            (
+                "ifno:range:maxbound",
+                "nodelist",
+                "landflag",
+                "ivertcon",
+                "surfdep",
+                "vks",
+                "thtr",
+                "thts",
+                "thti",
+                "eps",
+            ),
+        ],
+        "perioddata": [
+            "maxbound",
+            "nbound",
+            ("bound", ("ifno:range:maxbound", "finf", "pet", "extdp", "extwc", "ha", "hroot", "rootact")),
+        ],
+    },
 }
 
 
 def get_package_type(pkg_type):
     from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
+    from .advpaks import SfrPakage, UzfPackage
 
     pkg_types = {
         "dis": ArrayPackage,
@@ -266,9 +289,9 @@ def get_package_type(pkg_type):
         "sto": ArrayPackage,
         "wel": ListPackage,
         # advanced
-        # "sfr": SfrPakage,
+        "sfr": SfrPakage,
+        "uzf": UzfPackage,
         # "lak": None,
-        # "uzf": None,
         # "maw": None,
         # "csub": None,
         # gwt

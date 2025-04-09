@@ -279,20 +279,6 @@ class ArrayPackage(PackageBase):
 
         self._variables = ArrayInput(self)
 
-    def _get_var_addrs(self, block):
-        """
-        Method to make variable addresses for advanced packages
-
-        Parameters
-        ----------
-        block
-
-        Returns
-        -------
-
-        """
-        pass
-
     def __repr__(self):
         s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
         s += " Accessible variables include:\n"
@@ -492,11 +478,29 @@ class AdvancedPackage(PackageBase):
                 # create variable addresses!!!!
                 for var in self._adv_var_dict["perioddata"]:
                     if isinstance(var, tuple):
-                        self._bound_vars = var[-1]
-                        var = var[0]
+                        # todo: check if there's a compound variable in bound
+                        use_bound = True
+                        for v in var[-1]:
+                            if ":" in v:
+                                use_bound = False
 
-                    var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
-                    self._sp_var_addrs.append(var_addr)
+                        if use_bound:
+                            self._bound_vars = var[-1]
+                            var = var[0]
+                        else:
+                            for v in var[-1]:
+                                if ":" in v:
+                                    tmp = v.split(":")[0]
+                                    self._bound_vars.append(tmp)
+                                else:
+                                    self._bound_vars.append(v)
+                                var_addr = self._get_advanced_variable_addr(v)
+                                self._sp_var_addrs.append(var_addr)
+                            var = None
+
+                    if var is not None:
+                        var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
+                        self._sp_var_addrs.append(var_addr)
 
             self._package_vars = ListInput(self, self._package_var_addrs, spd=False)
             self._sp_vars = ListInput(self, self._sp_var_addrs)
