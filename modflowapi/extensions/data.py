@@ -256,7 +256,7 @@ class ListInput:
             elif self._bound in self._ptrs and name in self.parent._bound_vars:
                 # Check for bound to support advanced packages
                 idx = self.parent._bound_vars.index(name)
-                self._ptrs[self._bound[0]][0 : self._nbound[0], idx] = recarray[name]
+                self._ptrs[self._bound][0 : self._nbound[0], idx] = recarray[name]
                 visited.append(name)
 
             elif name in self._auxnames:
