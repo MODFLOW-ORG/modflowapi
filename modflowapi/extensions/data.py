@@ -247,7 +247,6 @@ class ListInput:
                 multi_index = tuple(np.array([list(i) for i in recarray[name]]).T)
                 nodes = np.ravel_multi_index(multi_index, self.parent.model.shape)
                 recarray[name] = self.parent.model.usertonode[nodes] + 1
-                visited.append(name)
 
             if name in ("divreach",):
                 self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel() + 1
