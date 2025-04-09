@@ -273,8 +273,8 @@ adv_pkgvars = {
 
 
 def get_package_type(pkg_type):
-    from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
     from .advpaks import SfrPakage, UzfPackage
+    from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
 
     pkg_types = {
         "dis": ArrayPackage,
