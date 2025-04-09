@@ -1,7 +1,7 @@
 import numpy as np
 
+from .datamodel import get_package_type, gridshape
 from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
-from .datamodel import gridshape, get_package_type
 
 
 class ApiMbase:

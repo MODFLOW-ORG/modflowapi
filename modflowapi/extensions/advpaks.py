@@ -1,6 +1,7 @@
-from .pakbase import AdvancedPackage
-from .data import ListInput
 import numpy as np
+
+from .data import ListInput
+from .pakbase import AdvancedPackage
 
 
 class SfrPakage(AdvancedPackage):

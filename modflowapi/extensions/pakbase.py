@@ -1,7 +1,7 @@
 import numpy as np
 
 from .data import AdvancedInput, ArrayInput, ListInput, ScalarInput
-from .datamodel import pkgvars, adv_pkgvars
+from .datamodel import adv_pkgvars, pkgvars
 
 
 class PackageBase:
