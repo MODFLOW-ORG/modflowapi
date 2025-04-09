@@ -134,7 +134,7 @@ class ListInput:
                             typ_str = values.dtype.str
                             dtype = (name, typ_str)
                             self._dtype.append(dtype)
-                    if reduced in self.parent._bound_vars:
+                    elif reduced in self.parent._bound_vars:
                         typ_str = values.dtype.str
                         dtype = (reduced, typ_str)
                         self._dtype.append(dtype)
@@ -267,11 +267,13 @@ class ListInput:
             elif name == "auxname_cst":
                 pass
 
+            elif name == self._bound:
+                pass
+
             else:
                 if isinstance(self._ptrs[name], str):
                     visited = self._special_condition_to_ptr(recarray, name, visited)
                 else:
-                    # shape = self._ptrs[name][0 : self._nbound[0]].shape
                     self._ptrs[name][0 : self._nbound[0]] = recarray[name]
                     visited.append(name)
 
