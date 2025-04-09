@@ -291,7 +291,7 @@ def get_package_type(pkg_type):
         # advanced
         "sfr": SfrPakage,
         "uzf": UzfPackage,
-        # "lak": None,
+        # "lak": abc,
         # "maw": None,
         # "csub": None,
         # gwt
