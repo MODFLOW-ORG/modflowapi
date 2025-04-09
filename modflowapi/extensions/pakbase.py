@@ -44,9 +44,7 @@ class PackageBase:
                         t = bv.split(":")
                         if len(t) == 2:
                             # this is a repeating variable
-                            addr = self.model.mf6.get_var_address(
-                                t[-1].upper(), self.model.name, self.pkg_name
-                            )
+                            addr = self.model.mf6.get_var_address(t[-1].upper(), self.model.name, self.pkg_name)
                             nrep = self.model.mf6.get_value(addr)[0]
                             if nrep > 1:
                                 for rep in range(nrep):
@@ -60,22 +58,12 @@ class PackageBase:
                     var = var[0]
 
                 if sim_package:
-                    var_addrs.append(
-                        self.model.mf6.get_var_address(
-                            var.upper(), self.pkg_name
-                        )
-                    )
+                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.pkg_name))
                 else:
-                    var_addrs.append(
-                        self.model.mf6.get_var_address(
-                            var.upper(), self.model.name, self.pkg_name
-                        )
-                    )
+                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
 
         for var in self._bound_vars:
-            addr_chk = self.model.mf6.get_var_address(
-                var.upper(), self.model.name, self.pkg_name
-            )
+            addr_chk = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
             if addr_chk in self.model.mf6.get_input_var_names():
                 # change this to use idm
                 self._idm_enabled = True
@@ -138,17 +126,11 @@ class PackageBase:
         """
         name = name.lower()
         if name not in self.advanced_vars:
-            raise AssertionError(
-                f"{name} is not accessible as an advanced "
-                f"variable for this package"
-            )
+            raise AssertionError(f"{name} is not accessible as an advanced variable for this package")
 
         values = self._variables_adv.get_variable(name)
         if not self._sim_package:
-            if (
-                values.size == self.model.nodetouser.size
-                and self._child_type == "array"
-            ):
+            if values.size == self.model.nodetouser.size and self._child_type == "array":
                 array = np.full(self.model.size, np.nan)
                 array[self.model.nodetouser] = values
                 return array
@@ -176,9 +158,7 @@ class PackageBase:
     def rhs(self):
         if not self._sim_package:
             if self._rhs is None:
-                var_addr = self.model.mf6.get_var_address(
-                    "RHS", self.model.name, self.pkg_name
-                )
+                var_addr = self.model.mf6.get_var_address("RHS", self.model.name, self.pkg_name)
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._rhs = self.model.mf6.get_value_ptr(var_addr)
                 else:
@@ -199,9 +179,7 @@ class PackageBase:
     def hcof(self):
         if not self._sim_package:
             if self._hcof is None:
-                var_addr = self.model.mf6.get_var_address(
-                    "HCOF", self.model.name, self.pkg_name
-                )
+                var_addr = self.model.mf6.get_var_address("HCOF", self.model.name, self.pkg_name)
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._hcof = self.model.mf6.get_value_ptr(var_addr)
                 else:
@@ -236,9 +214,7 @@ class ListPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "list", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "list", sim_package)
 
         self._variables = ListInput(self)
 
@@ -279,9 +255,7 @@ class ListPackage(PackageBase):
         elif recarray is None:
             self._variables.values = recarray
         else:
-            raise TypeError(
-                f"{type(recarray)} is not a supported stress_period_data type"
-            )
+            raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
 
 class ArrayPackage(PackageBase):
@@ -301,9 +275,7 @@ class ArrayPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "array", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "array", sim_package)
 
         self._variables = ArrayInput(self)
 
@@ -333,12 +305,7 @@ class ArrayPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -413,9 +380,7 @@ class ScalarPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "scalar", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "scalar", sim_package)
 
         self._variables = ScalarInput(self)
 
@@ -431,12 +396,7 @@ class ScalarPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -513,10 +473,8 @@ class AdvancedPackage(PackageBase):
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
     """
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False): # pass in stress period data here ????
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "advanced", sim_package
-        )
+    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
+        super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
 
         self._idm_enabled = False
         self._package_var_addrs = []
@@ -653,7 +611,7 @@ class AdvancedPackage(PackageBase):
 
 class ApiSlnPackage(ScalarPackage):
     """
-    Class to acess solution packages
+    Class to access solution packages
 
     Parameters
     ----------
@@ -675,9 +633,7 @@ class ApiSlnPackage(ScalarPackage):
         super().__init__(sim, f"sln-{pkg_type}", pkg_name, sim_package=True)
 
         if pkg_type in ("ims",):
-            mdl = ApiMbase(
-                sim.mf6, pkg_name.upper(), pkg_types={pkg_type: ScalarPackage}
-            )
+            mdl = ApiMbase(sim.mf6, pkg_name.upper(), pkg_types={pkg_type: ScalarPackage})
             imslin = ScalarPackage(mdl, "ims", "IMSLINEAR")
             for key, ptr in imslin._variables._ptrs.items():
                 if key in self._variables._ptrs:
@@ -710,12 +666,6 @@ def package_factory(pkg_type, basepackage):
     cls_str = "".join(pkg_type.split("-"))
     cls_str = f"{cls_str[0].upper()}{cls_str[1:]}"
 
-
-    # should this be a classmethod on each package????
-    package = type(
-        f"Api{cls_str}Package",
-        (basepackage,),
-        {"__init__": __init__},
-    )
+    package = type(f"Api{cls_str}Package", (basepackage,), {"__init__": __init__})
 
     return package

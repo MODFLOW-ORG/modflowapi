@@ -1,12 +1,6 @@
 import numpy as np
 
-from .pakbase import (
-    AdvancedPackage,
-    ArrayPackage,
-    ListPackage,
-    package_factory,
-)
-
+from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
 from .datamodel import gridshape, get_package_type
 
 
@@ -97,9 +91,7 @@ class ApiMbase:
             package = package(basepackage, self, pkg_type, adj_pkg_name)
             self.package_dict[pkg_name.lower()] = package
 
-    def get_package(
-        self, pkg_name
-    ) -> ListPackage or ArrayPackage or AdvancedPackage:
+    def get_package(self, pkg_name) -> ListPackage or ArrayPackage or AdvancedPackage:
         """
         Method to get a package
 
@@ -112,9 +104,7 @@ class ApiMbase:
         if pkg_name in self.package_dict:
             return self.package_dict[pkg_name]
 
-        raise KeyError(
-            f"{pkg_name} is not a valid package name for this model"
-        )
+        raise KeyError(f"{pkg_name} is not a valid package name for this model")
 
 
 class ApiModel(ApiMbase):
@@ -145,9 +135,7 @@ class ApiModel(ApiMbase):
             self.dis_type = "disu"
             self.dis_name = "DIS"
         else:
-            raise AssertionError(
-                f"Unrecognized discretization type {grid_type}"
-            )
+            raise AssertionError(f"Unrecognized discretization type {grid_type}")
 
         self.allow_convergence = True
         self._shape = None
@@ -162,10 +150,7 @@ class ApiModel(ApiMbase):
         s = f"{self.name}, "
         shape = self.shape
         if self.dis_type == "dis":
-            s += (
-                f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} "
-                f"Column model\n"
-            )
+            s += f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} Column model\n"
 
         elif self.dis_type == "disu":
             if len(shape) == 2:
@@ -283,15 +268,11 @@ class ApiModel(ApiMbase):
             shape_vars = gridshape[self.dis_type]
             shape = []
             for var in shape_vars:
-                var_addr = self.mf6.get_var_address(
-                    var.upper(), self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address(var.upper(), self.name, self.dis_name)
                 if var_addr in ivn:
                     shape.append(self.mf6.get_value(var_addr)[0])
             if not shape:
-                var_addr = self.mf6.get_var_address(
-                    "NODES", self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address("NODES", self.name, self.dis_name)
                 shape.append(self.mf6.get_value(var_addr)[0])
             self._shape = tuple(shape)
         return self._shape
@@ -348,13 +329,9 @@ class ApiModel(ApiMbase):
             nodeuser = np.arange(nodes).astype(int)
             nodereduced = np.copy(nodeuser)
         else:
-            nodeuser_addr = self.mf6.get_var_address(
-                "NODEUSER", self.name, self.dis_name
-            )
+            nodeuser_addr = self.mf6.get_var_address("NODEUSER", self.name, self.dis_name)
             nodeuser = self.mf6.get_value(nodeuser_addr) - 1
-            nodereduced_addr = self.mf6.get_var_address(
-                "NODEREDUCED", self.name, self.dis_name
-            )
+            nodereduced_addr = self.mf6.get_var_address("NODEREDUCED", self.name, self.dis_name)
             nodereduced = self.mf6.get_value(nodereduced_addr) - 1
 
         self._nodetouser = nodeuser

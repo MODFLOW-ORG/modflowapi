@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "modflowapi"
@@ -25,13 +25,13 @@ classifiers = [
     "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Hydrology",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "pandas",
@@ -42,7 +42,7 @@ dependencies = [
 dev = ["modflowapi[test,lint]"]
 test = [
     "filelock",
-    "modflow-devtools",
+    "modflow-devtools[dfn] @ git+https://github.com/MODFLOW-ORG/modflow-devtools.git",
     "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
@@ -55,35 +55,52 @@ test = [
     "rasterstats"
 ]
 lint = [
+    "codespell[toml] >=2.2.2",
     "ruff",
+]
+docs = [
+    "modflowapi[test]",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "jupyter",
+    "jupytext",
+    "nbsphinx",
+    "ipython",
+    "flopy",
 ]
 
 [project.urls]
-Repository = "https://github.com/MODFLOW-USGS/modflowapi"
+Repository = "https://github.com/MODFLOW-ORG/modflowapi"
 Publication = "https://doi.org/10.1016/j.envsoft.2021.105257"
 
-[tool.setuptools.dynamic]
-version = {attr = "modflowapi.version.__version__"}
+[tool.hatch.build.targets.sdist]
+only-include = ["modflowapi"]
 
-[tool.setuptools.packages.find]
-include = ["modflowapi", "modflowapi.*"]
+[tool.hatch.build.targets.wheel]
+packages = ["modflowapi"]
+
+[tool.hatch.version]
+path = "modflowapi/version.py"
+
+[tool.hatch.metadata]
+# temporary, until new devtools release
+allow-direct-references = true
 
 [tool.ruff]
-target-version = "py38"
-line-length = 79
-include = [
-    "pyproject.toml",
-    "modflowapi/**/*.py",
-    "autotest/**/*.py",
-    "examples/**/*.py",
-    "scripts/**/*.py",
-]
-extend-include = [
-    "examples/**/*.ipynb"
-]
+line-length = 120
 
 [tool.ruff.lint]
 select = ["F", "E", "I001"]
 ignore = [
     "F841" # local variable assigned but never used
+]
+
+[tool.codespell]
+skip = "cliff.toml,*.grb"
+ignore-words-list = [
+    "delt",
+    "wel",
+    "nam",
+    "ist",
 ]

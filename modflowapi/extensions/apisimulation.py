@@ -19,7 +19,7 @@ class ApiSimulation:
     solutions : dict
         dictionary of solution_id: solution_name
     exchanges : dict
-        dictoinary of exchange_name: modflowapi.extensions.ApiExchange objects
+        dictionary of exchange_name: modflowapi.extensions.ApiExchange objects
     tdis : ApiTdisPackage
         time discretization (TDIS) ScalarPackage
     ats : None or ApiAtsPackage
@@ -221,9 +221,7 @@ class ApiSimulation:
             model name (ex. "GWF_1") or subcomponent id (ex. 1)
         """
         if model_id is None:
-            model_id = int(
-                min([model.subcomponent_id for model in self.models])
-            )
+            model_id = int(min([model.subcomponent_id for model in self.models]))
 
         if isinstance(model_id, int):
             for model in self.models:
@@ -310,9 +308,7 @@ class ApiSimulation:
 
         idp_names = [i for i in mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES")]
         solution_types = [
-            i[:-1].lower()
-            for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE"))
-            if idp_names[ix]
+            i[:-1].lower() for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE")) if idp_names[ix]
         ]
 
         tmpmdl = ApiMbase(mf6, "")
@@ -329,26 +325,20 @@ class ApiSimulation:
 
         # TDIS package construction
         tdis_constructor = package_factory("tdis", ScalarPackage)
-        tdis = tdis_constructor(
-            ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True
-        )
+        tdis = tdis_constructor(ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True)
 
         ats = None
         # ATS package construction
         for variable in variables:
             if variable.startswith("ATS"):
                 ats_constructor = package_factory("ats", ListPackage)
-                ats = ats_constructor(
-                    ListPackage, tmpmdl, "ats", "ats", sim_package=True
-                )
+                ats = ats_constructor(ListPackage, tmpmdl, "ats", "ats", sim_package=True)
                 break
 
         # get the exchanges
         exchange_names = []
         for variable in variables:
-            if variable.startswith("GWF-GWF") or variable.startswith(
-                "GWT-GWT"
-            ):
+            if variable.startswith("GWF-GWF") or variable.startswith("GWT-GWT"):
                 exchange_name = variable.split("/")[0]
                 if exchange_name not in exchange_names:
                     exchange_names.append(exchange_name)

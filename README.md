@@ -1,8 +1,8 @@
 # modflowapi
 
-[![CI](https://github.com/MODFLOW-USGS/modflowapi/actions/workflows/ci.yml/badge.svg)](https://github.com/MODFLOW-USGS/modflowapi/actions/workflows/ci.yml)
-[![GitHub contributors](https://img.shields.io/github/contributors/MODFLOW-USGS/modflowapi)](https://img.shields.io/github/contributors/MODFLOW-USGS/modflowapi)
-[![GitHub tag](https://img.shields.io/github/tag/MODFLOW-USGS/modflowapi.svg)](https://github.com/MODFLOW-USGS/modflowapi/tags/latest)
+[![CI](https://github.com/MODFLOW-ORG/modflowapi/actions/workflows/ci.yml/badge.svg)](https://github.com/MODFLOW-ORG/modflowapi/actions/workflows/ci.yml)
+[![GitHub contributors](https://img.shields.io/github/contributors/MODFLOW-ORG/modflowapi)](https://img.shields.io/github/contributors/MODFLOW-ORG/modflowapi)
+[![GitHub tag](https://img.shields.io/github/tag/MODFLOW-ORG/modflowapi.svg)](https://github.com/MODFLOW-ORG/modflowapi/tags/latest)
 
 [![PyPI License](https://img.shields.io/pypi/l/modflowapi)](https://pypi.python.org/pypi/modflowapi)
 [![PyPI Status](https://img.shields.io/pypi/status/modflowapi.png)](https://pypi.python.org/pypi/modflowapi)
@@ -33,7 +33,7 @@ and additional functionality specific to the MODFLOW API. Currently it is a join
 
 ## Installation
 
-`modflowapi` requires Python 3.9+, with:
+`modflowapi` requires Python 3.10+, with:
 
 ```shell
 numpy
@@ -55,7 +55,9 @@ conda install -c conda-forge modflowapi
 
 ## Documentation
 
-Examples using `modflowapi` and its extensions can be found in the [Quickstart](examples/notebooks/Quickstart.ipynb) and the [Extensions](examples/notebooks/MODFLOW-API_extensions_objects.ipynb) notebooks. An example of using the MODFLOW API to monitor heads during a simulation can be found in the [Head Monitor Example](examples/notebooks/Head_Monitor_Example.ipynb) Notebook. 
+Documentation is available [on ReadTheDocs](modflowapi.readthedocs.io).
+
+Examples using `modflowapi` and its extensions can be found in the [Quickstart](docs/examples/notebooks/Quickstart.ipynb) and the [Extensions](docs/examples/notebooks/MODFLOW-API_extensions_objects.ipynb) notebooks. An example of using the MODFLOW API to monitor heads during a simulation can be found in the [Head Monitor Example](docs/examples/notebooks/Head_Monitor_Example.ipynb) Notebook. 
 
 For more info on MODFLOW 6 see [the USGS overview](https://water.usgs.gov/ogw/modflow/).
 

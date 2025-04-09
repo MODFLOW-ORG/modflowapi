@@ -64,10 +64,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         mf6.prepare_time_step(dt)
 
         if verbose:
-            print(
-                f"Solving: Stress Period {sim.kper + 1}; "
-                f"Timestep {sim.kstp + 1}"
-            )
+            print(f"Solving: Stress Period {sim.kper + 1}; Timestep {sim.kstp + 1}")
 
         for sol_id, slnobj in sorted(sim.solutions.items()):
             models = {}
@@ -77,9 +74,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
                 if sol_id == model.solution_id:
                     models[model.name.lower()] = model
 
-            sim_grp = ApiSimulation(
-                mf6, models, solution, sim._exchanges, sim.tdis, sim.ats
-            )
+            sim_grp = ApiSimulation(mf6, models, solution, sim._exchanges, sim.tdis, sim.ats)
             mf6.prepare_solve(sol_id)
             if sim.kper != kperold[sol_id - 1]:
                 callback(sim_grp, Callbacks.stress_period_start)

@@ -7,24 +7,12 @@ import pytest
 from modflow_devtools.misc import set_dir
 
 from modflowapi import Callbacks, ModflowApi, run_simulation
-from modflowapi.extensions.pakbase import (
-    AdvancedPackage,
-    ArrayPackage,
-    ListPackage,
-)
+from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
 
-data_pth = Path("../examples/data")
+data_pth = Path("../docs/examples/data")
 pytestmark = pytest.mark.extensions
 os = system()
-so = "libmf6" + (
-    ".so"
-    if os == "Linux"
-    else ".dylib"
-    if os == "Darwin"
-    else ".dll"
-    if os == "Windows"
-    else None
-)
+so = "libmf6" + (".so" if os == "Linux" else ".dylib" if os == "Darwin" else ".dll" if os == "Windows" else None)
 if so is None:
     pytest.skip("Unsupported operating system", allow_module_level=True)
 
@@ -80,9 +68,7 @@ def test_dis_model(function_tmpdir):
                 raise AssertionError("ApiModel size is incorrect")
 
             if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError(
-                    "ApiModel has advanced prior to initialization callback"
-                )
+                raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
             if not isinstance(dis, ArrayPackage):
@@ -98,9 +84,7 @@ def test_dis_model(function_tmpdir):
 
             rch = model.rch
             if len(rch) != 2:
-                raise AssertionError(
-                    "ApiModel object not returning multiple packages"
-                )
+                raise AssertionError("ApiModel object not returning multiple packages")
 
             idomain = dis.idomain.values
             if not isinstance(idomain, np.ndarray):
@@ -108,15 +92,11 @@ def test_dis_model(function_tmpdir):
 
         elif step == Callbacks.stress_period_start:
             if sim.kstp != 0:
-                raise AssertionError(
-                    "Solution advanced prior to stress_period_start callback"
-                )
+                raise AssertionError("Solution advanced prior to stress_period_start callback")
 
         elif step == Callbacks.timestep_start:
             if sim.iteration != -1:
-                raise AssertionError(
-                    "Solution advanced prior to timestep_start callback"
-                )
+                raise AssertionError("Solution advanced prior to timestep_start callback")
 
             factor = ((1 + sim.kstp) / sim.nstp) * 0.5
             spd = sim.test_model.wel.stress_period_data.values
@@ -175,9 +155,7 @@ def test_disv_model(function_tmpdir):
                 raise AssertionError("ApiModel size is incorrect")
 
             if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError(
-                    "ApiModel has advanced prior to initialization callback"
-                )
+                raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
             if not isinstance(dis, ArrayPackage):
@@ -193,9 +171,7 @@ def test_disv_model(function_tmpdir):
 
             chd = model.chd
             if len(chd) != 2:
-                raise AssertionError(
-                    "ApiModel object not returning multiple packages"
-                )
+                raise AssertionError("ApiModel object not returning multiple packages")
 
             top = dis.top.values
             if not isinstance(top, np.ndarray):
@@ -203,15 +179,11 @@ def test_disv_model(function_tmpdir):
 
         elif step == Callbacks.stress_period_start:
             if sim.kstp != 0:
-                raise AssertionError(
-                    "Solution advanced prior to stress_period_start callback"
-                )
+                raise AssertionError("Solution advanced prior to stress_period_start callback")
 
         elif step == Callbacks.timestep_start:
             if sim.iteration != -1:
-                raise AssertionError(
-                    "Solution advanced prior to timestep_start callback"
-                )
+                raise AssertionError("Solution advanced prior to timestep_start callback")
 
             factor = 0.75
             spd = sim.gwf_1.chd_left.stress_period_data.values
@@ -261,9 +233,7 @@ def test_disu_model(function_tmpdir):
                 raise AssertionError("ApiModel size is incorrect")
 
             if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError(
-                    "ApiModel has advanced prior to initialization callback"
-                )
+                raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
             if not isinstance(dis, ArrayPackage):
@@ -283,15 +253,11 @@ def test_disu_model(function_tmpdir):
 
         elif step == Callbacks.stress_period_start:
             if sim.kstp != 0:
-                raise AssertionError(
-                    "Solution advanced prior to stress_period_start callback"
-                )
+                raise AssertionError("Solution advanced prior to stress_period_start callback")
 
         elif step == Callbacks.timestep_start:
             if sim.iteration != -1:
-                raise AssertionError(
-                    "Solution advanced prior to timestep_start callback"
-                )
+                raise AssertionError("Solution advanced prior to timestep_start callback")
 
             factor = 1.75
             spd = sim.gwf_1.rch.stress_period_data.values
@@ -347,9 +313,7 @@ def test_ats_model(function_tmpdir):
         if step == Callbacks.timestep_start:
             if sim.kstp == 1:
                 if delt0 == sim.delt:
-                    raise AssertionError(
-                        "ATS routines not reducing timestep length"
-                    )
+                    raise AssertionError("ATS routines not reducing timestep length")
 
         name = "ats0"
         sim_pth = data_pth / name
@@ -372,9 +336,7 @@ def test_rhs_hcof_advanced(function_tmpdir):
             wel.rhs = rhs
 
             rhs2 = wel.get_advanced_var("rhs")
-            np.testing.assert_allclose(
-                rhs, rhs2, err_msg="rhs variable not being properly set"
-            )
+            np.testing.assert_allclose(rhs, rhs2, err_msg="rhs variable not being properly set")
 
             hcof = wel.hcof
             hcof[0:3] = np.abs(rhs)[0:3] / 2
@@ -383,19 +345,13 @@ def test_rhs_hcof_advanced(function_tmpdir):
 
             hcof2 = wel.get_advanced_var("hcof")
 
-            np.testing.assert_allclose(
-                hcof, hcof2, err_msg="hcof is not being properly set"
-            )
+            np.testing.assert_allclose(hcof, hcof2, err_msg="hcof is not being properly set")
 
             rhs *= 1.2
             wel.set_advanced_var("rhs", rhs)
             rhs3 = wel.rhs
 
-            np.testing.assert_allclose(
-                rhs,
-                rhs3,
-                err_msg="set advanced var method not working properly",
-            )
+            np.testing.assert_allclose(rhs, rhs3, err_msg="set advanced var method not working properly")
 
             npf = model.npf
 

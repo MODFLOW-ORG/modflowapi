@@ -135,3 +135,24 @@ dmypy.json
 **.dll
 **.so
 **.dylib
+
+# uv lockfile
+uv.lock
+
+# temporary test folders
+autotest/temp/**
+
+# notebooks
+docs/examples/notebooks/*.ipynb
+
+# autosummary
+docs/_autosummary/
+
+# mf6 output files
+**/*.lst
+**/*.stdout
+**/*.cbc
+**/*.cbb
+**/*.hds
+**/*.hed
+**/*.grb
