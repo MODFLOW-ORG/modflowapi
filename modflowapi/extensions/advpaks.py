@@ -18,6 +18,7 @@ class SfrPakage(AdvancedPackage):
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
     """
+
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
         super().__init__(model, pkg_type, pkg_name, sim_package)
 
@@ -42,9 +43,7 @@ class SfrPakage(AdvancedPackage):
         elif recarray is None:
             self._package_vars.values = recarray
         else:
-            raise TypeError(
-                f"{type(recarray)} is not a supported stress_period_data type"
-            )
+            raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
 
 class LakPackage:
@@ -122,7 +121,10 @@ class CsubPackage:
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
     """
-    def __init__(self, ):
+
+    def __init__(
+        self,
+    ):
         self.x = None
 
 
@@ -141,5 +143,8 @@ class MvrPackage:
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
     """
-    def __init__(self, ):
+
+    def __init__(
+        self,
+    ):
         self.x = None

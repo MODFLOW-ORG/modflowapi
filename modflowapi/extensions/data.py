@@ -53,11 +53,7 @@ class ListInput:
                     self.var_addrs.index(self.mf6.get_var_address(var, self.parent.model.name, self.parent.pkg_name))
                 )
 
-            self.var_addrs.append(
-                self.mf6.get_var_address(
-                    "AUXVAR_IDM", self.parent.model.name, self.parent.pkg_name
-                )
-            )
+            self.var_addrs.append(self.mf6.get_var_address("AUXVAR_IDM", self.parent.model.name, self.parent.pkg_name))
 
         self._set_data()
 
@@ -84,8 +80,20 @@ class ListInput:
 
                 if reduced in ("ndiv",):
                     nbound = self._special_condition_to_values(ctype, values)
-                    setattr(self, "_maxbound", [len(values),])
-                    setattr(self, "_nbound", [nbound,])
+                    setattr(
+                        self,
+                        "_maxbound",
+                        [
+                            len(values),
+                        ],
+                    )
+                    setattr(
+                        self,
+                        "_nbound",
+                        [
+                            nbound,
+                        ],
+                    )
                 else:
                     self._compound_ptrs[ptr_var] = values
                     self._ptrs[reduced] = f"{ctype}:{ptr_var}"
@@ -107,7 +115,10 @@ class ListInput:
                     setattr(self, f"_{reduced}", values)
                     if not self._spd and reduced == "maxbound":
                         self._nbound = values
-                elif reduced in ("nexg", "maxats",):
+                elif reduced in (
+                    "nexg",
+                    "maxats",
+                ):
                     setattr(self, "_maxbound", values)
                     setattr(self, "_nbound", values)
                 elif reduced in ("naux",):
@@ -131,7 +142,7 @@ class ListInput:
                         dtype = (reduced, "O")
                         self._dtype.append(dtype)
                     elif "auxvar" in reduced:
-                        self._auxvar_name = reduced #  == "auxvar_idm":
+                        self._auxvar_name = reduced  #  == "auxvar_idm":
                         if self._naux == 0:
                             continue
                         else:
@@ -170,19 +181,19 @@ class ListInput:
             if name == self._bound:
                 # note: keep block around for advanced packages
                 for ix, nm in enumerate(self.parent._bound_vars):
-                    bnd_values = values[0: self._nbound[0], ix]
-                    recarray[nm][0: self._nbound[0]] = bnd_values
+                    bnd_values = values[0 : self._nbound[0], ix]
+                    recarray[nm][0 : self._nbound[0]] = bnd_values
 
             elif name in self.parent._bound_vars and self.parent._idm_enabled:
                 # IDM simplification method
-                bnd_values = values[0: self._nbound[0]].ravel()
-                recarray[name][0: self._nbound[0]] = bnd_values
+                bnd_values = values[0 : self._nbound[0]].ravel()
+                recarray[name][0 : self._nbound[0]] = bnd_values
 
             elif name == self._auxvar_name:
                 for ix in range(self._naux[0]):
                     nm = self._auxnames[ix]
-                    aux_values = values[0: self._nbound[0], ix]
-                    recarray[nm][0: self._nbound[0]] = aux_values
+                    aux_values = values[0 : self._nbound[0], ix]
+                    recarray[nm][0 : self._nbound[0]] = aux_values
 
             elif name == "auxname_cst":
                 pass
@@ -197,8 +208,8 @@ class ListInput:
                 elif name in ("idv", "divreach"):
                     values -= 1
 
-                values = values[0: self._nbound[0]]
-                recarray[name][0: self._nbound[0]] = values
+                values = values[0 : self._nbound[0]]
+                recarray[name][0 : self._nbound[0]] = values
 
         return recarray
 
@@ -239,19 +250,19 @@ class ListInput:
                 visited.append(name)
 
             if name in ("divreach",):
-                self._ptrs[name][0: self._nbound[0]] = recarray[name].ravel() + 1
+                self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel() + 1
                 visited.append(name)
 
             elif self._bound in self._ptrs and name in self.parent._bound_vars:
                 # Check for bound to support advanced packages
                 idx = self.parent._bound_vars.index(name)
-                self._ptrs[self._bound[0]][0: self._nbound[0], idx] = recarray[name]
+                self._ptrs[self._bound[0]][0 : self._nbound[0], idx] = recarray[name]
                 visited.append(name)
 
             elif name in self._auxnames:
                 ptr_name = self._auxvar_name
                 idx = self._auxnames.index(name)
-                self._ptrs[ptr_name][0: self._nbound[0], idx] = recarray[name]
+                self._ptrs[ptr_name][0 : self._nbound[0], idx] = recarray[name]
                 visited.append(name)
 
             elif name == "auxname_cst":
@@ -261,7 +272,7 @@ class ListInput:
                 if isinstance(self._ptrs[name], str):
                     visited = self._special_condition_to_ptr(recarray, name, visited)
                 else:
-                    self._ptrs[name][0: self._nbound[0]] = recarray[name].ravel()
+                    self._ptrs[name][0 : self._nbound[0]] = recarray[name].ravel()
                     visited.append(name)
 
     def _special_condition_to_values(self, ctype, inval):
@@ -299,7 +310,9 @@ class ListInput:
 
         """
         functions = {
-            "range": lambda x: [len(x),],
+            "range": lambda x: [
+                len(x),
+            ],
         }
         ctype, ptr_name = self._ptrs[name].split(":")
         if "where" in ctype:

@@ -5,7 +5,10 @@ blocks, and input variables that are used by the modflowapi.extensions code
 
 gridshape = {
     "dis": ["nlay", "nrow", "ncol"],
-    "disu": ["nlay", "ncpl",],
+    "disu": [
+        "nlay",
+        "ncpl",
+    ],
 }
 
 
@@ -209,10 +212,10 @@ pkgvars = {
 
 
 adv_pkgvars = {
-    "sfr":
-        {"packagedata":[
+    "sfr": {
+        "packagedata": [
             "maxbound",
-                (
+            (
                 "ifno:range:maxbound",
                 "nodelist",
                 "length",
@@ -224,29 +227,25 @@ adv_pkgvars = {
                 "rough",
                 "nconnreach",
                 "ustrf",
-                "ndiv"
-                ),
-            ],
-        "diversions":[
-            "ndiv:count_nonzero:ndiv",
-            (
-            "ifno:where_idx:ndiv",
-            "idv:where_val:ndiv",
-            "divreach", # iconr
+                "ndiv",
             ),
         ],
-        "perioddata":[
+        "diversions": [
+            "ndiv:count_nonzero:ndiv",
+            (
+                "ifno:where_idx:ndiv",
+                "idv:where_val:ndiv",
+                "divreach",  # iconr
+            ),
+        ],
+        "perioddata": [
             "maxbound",
             "nbound",
-            ("bound",
-                (
-                "ifno",
-                "sfrsetting",
-                "setting_0",
-                "setting_1"
-                ),
-             )
-            ],
+            (
+                "bound",
+                ("ifno", "sfrsetting", "setting_0", "setting_1"),
+            ),
+        ],
     }
 }
 
@@ -254,6 +253,7 @@ adv_pkgvars = {
 def get_package_type(pkg_type):
     from .pakbase import ArrayPackage, ListPackage, ScalarPackage, AdvancedPackage
     from .advpaks import SfrPakage
+
     pkg_types = {
         "dis": ArrayPackage,
         "chd": ListPackage,
@@ -288,7 +288,7 @@ def get_package_type(pkg_type):
         # sim_level pkgs
         "tdis": ScalarPackage,
         "ats": ListPackage,
-        }
+    }
     if pkg_type in pkg_types:
         return pkg_types[pkg_type]
     else:

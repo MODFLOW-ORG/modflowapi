@@ -473,6 +473,7 @@ class AdvancedPackage(PackageBase):
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
     """
+
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
         super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
 
@@ -494,9 +495,7 @@ class AdvancedPackage(PackageBase):
                         self._bound_vars = var[-1]
                         var = var[0]
 
-                    var_addr = self.model.mf6.get_var_address(
-                        var.upper(), self.model.name, self.pkg_name
-                    )
+                    var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
                     self._sp_var_addrs.append(var_addr)
 
             self._package_vars = ListInput(self, self._package_var_addrs, spd=False)
@@ -572,9 +571,7 @@ class AdvancedPackage(PackageBase):
             elif recarray is None:
                 self._package_vars.values = recarray
             else:
-                raise TypeError(
-                    f"{type(recarray)} is not a supported stress_period_data type"
-                )
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
     @property
     def maxbound(self):
@@ -604,9 +601,7 @@ class AdvancedPackage(PackageBase):
             elif recarray is None:
                 self._sp_vars.values = recarray
             else:
-                raise TypeError(
-                    f"{type(recarray)} is not a supported stress_period_data type"
-                )
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
 
 class ApiSlnPackage(ScalarPackage):
