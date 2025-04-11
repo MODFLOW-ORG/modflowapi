@@ -118,6 +118,7 @@ class ListInput:
                 elif reduced in (
                     "nexg",
                     "maxats",
+                    "nlakes"
                 ):
                     setattr(self, "_maxbound", values)
                     setattr(self, "_nbound", values)

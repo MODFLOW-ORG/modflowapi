@@ -38,16 +38,16 @@ class SfrPakage(AdvancedPackage):
 
         """
         if isinstance(recarray, np.recarray):
-            self._package_vars.values = recarray
+            self._diversion_vars.values = recarray
         elif isinstance(recarray, ListInput):
-            self._package_vars.values = recarray.values
+            self._diversion_vars.values = recarray.values
         elif recarray is None:
-            self._package_vars.values = recarray
+            self._diversion_vars.values = recarray
         else:
-            raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
+            raise TypeError(f"{type(recarray)} is not a supported diversions type")
 
 
-class LakPackage:
+class LakPackage(AdvancedPackage):
     """
     Container for LAK and LAK like packages
 
