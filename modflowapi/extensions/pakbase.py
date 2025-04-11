@@ -478,7 +478,6 @@ class AdvancedPackage(PackageBase):
                 # create variable addresses!!!!
                 for var in self._adv_var_dict["perioddata"]:
                     if isinstance(var, tuple):
-                        # todo: check if there's a compound variable in bound
                         use_bound = True
                         for v in var[-1]:
                             if ":" in v:
@@ -565,6 +564,10 @@ class AdvancedPackage(PackageBase):
     def packagedata(self, recarray):
         """
         Setter method to update the packagedata
+
+        Parameters
+        ----------
+        recarray : np.recarray, ListInput, or None
 
         """
         if self._package_vars is not None:

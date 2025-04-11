@@ -276,13 +276,19 @@ class ListInput:
 
     def _special_condition_to_values(self, ctype, inval):
         """
+        Method to catch and set special, compound conditions where necessary data
+        is not directly available from MODFLOW
 
         Parameters
         ----------
-        sp_cond
+        ctype : str
+            condition type
+        inval : int, float, np.ndarray
+            input data value
 
         Returns
         -------
+        outval : np.array of values
         """
         functions = {
             "range": lambda x: np.arange(0, int(x), dtype=int),
@@ -300,13 +306,22 @@ class ListInput:
 
     def _special_condition_to_ptr(self, recarray, name, visited):
         """
+        Method to catch and set special, compound conditions to the associated MODFLOW
+        ptr where the user data is not directly available from MODFLOW
 
         Parameters
+        ----------
+        recarray : np.recarray
+            recarray of user data
+        name : str
+            data column name
+        visited : list
+            list of visited data columns used to avoid duplicate processing
 
 
         Returns
         -------
-
+        visited : list
         """
         functions = {
             "range": lambda x: [
