@@ -311,7 +311,7 @@ class ApiSimulation:
             i[:-1].lower() for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE")) if idp_names[ix]
         ]
 
-        tmpmdl = ApiMbase(mf6, "", {})
+        tmpmdl = ApiMbase(mf6, "")
         solution_names = list(set(solution_names))
         solution_dict = {}
         for name in solution_names:

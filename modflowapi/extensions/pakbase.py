@@ -1,174 +1,7 @@
 import numpy as np
 
 from .data import AdvancedInput, ArrayInput, ListInput, ScalarInput
-
-# Note: HFB variables are not accessible in the memory manager 10/7/2022
-pkgvars = {
-    "dis": ["top", "bot", "area", "idomain"],
-    "chd": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        ("bound", ("head",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "drn": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        ("bound", ("elev", "cond")),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "evt": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        ("bound", ("surface", "rate", "depth")),
-        # "pxdp:NSEG", "petm:NSEG"
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ghb": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        ("bound", ("bhead", "cond")),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ic": ["strt"],
-    "npf": ["k11", "k22", "k33", "angle1", "angle2", "angle3", "icelltype"],
-    "rch": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("recharge",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "riv": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("stage", "cond", "rbot")),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "sto": ["iconvert", "ss", "sy"],
-    "wel": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("q",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    # gwe model
-    "cnd": ["alh", "alv", "ath1", "ath2", "atv", "kts"],
-    "est": ["porosity", "decay", "cps", "rhos"],
-    "cpt": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("temp",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "esl": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("senerrate",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    # gwt model
-    "dsp": ["diffc", "alh", "alv", "ath1", "ath2", "atv"],
-    "cnc": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("conc",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ist": [
-        "cim",
-        "thtaim",
-        "zetaim",
-        "decay",
-        "decay_sorbed",
-        "bulk_density",
-        "distcoef",
-    ],
-    "mst": ["porosity", "decay", "decay_sorbed", "bulk_density", "distcoef"],
-    "src": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("smassrate",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    # prt model
-    "mip": ["porosity", "retfactor", "izone"],
-    # exchange model
-    "gwf-gwf": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
-    "gwt-gwt": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
-    "gwe-gwe": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
-    # simulation
-    "ats": ["maxats", "iperats", "dt0", "dtmin", "dtmax", "dtadj", "dtfailadj"],
-    "tdis": [
-        "nper",
-        "itmuni",
-        "kper",
-        "kstp",
-        "delt",
-        "pertim",
-        "totim,",
-        "perlen",
-        "nstp",
-        "tsmult",
-    ],
-    # solution package
-    "sln-ims": [
-        "mxiter",
-        "dvclose",
-        "gamma",
-        "theta",
-        "akappa",
-        "amomentum",
-        "numtrack",
-        "btol",
-        "breduc",
-        "res_lim",
-    ],
-    "ims": [
-        "niterc",
-        "dvclose",
-        "rclose",
-        "relax",
-        "ipc",
-        "droptol",
-        "north",
-        "iscl",
-        "iord",
-    ],
-    "sln-ems": ["icnvg", "ttsoln"],
-}
+from .datamodel import adv_pkgvars, pkgvars
 
 
 class PackageBase:
@@ -232,6 +65,7 @@ class PackageBase:
         for var in self._bound_vars:
             addr_chk = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
             if addr_chk in self.model.mf6.get_input_var_names():
+                # change this to use idm
                 self._idm_enabled = True
                 var_addrs.append(addr_chk)
 
@@ -629,11 +463,152 @@ class AdvancedPackage(PackageBase):
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
         super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
 
+        self._idm_enabled = False
+        self._package_var_addrs = []
+        self._sp_var_addrs = []
+        self._package_vars = None
+        self._sp_vars = None
+
+        if pkg_type in adv_pkgvars:
+            self._adv_var_dict = adv_pkgvars[pkg_type]
+
+            self._set_advanced_variable_addrs("packagedata", "_package_var_addrs")
+
+            if "perioddata" in self._adv_var_dict:
+                # create variable addresses!!!!
+                for var in self._adv_var_dict["perioddata"]:
+                    if isinstance(var, tuple):
+                        use_bound = True
+                        for v in var[-1]:
+                            if ":" in v:
+                                use_bound = False
+
+                        if use_bound:
+                            self._bound_vars = var[-1]
+                            var = var[0]
+                        else:
+                            for v in var[-1]:
+                                if ":" in v:
+                                    tmp = v.split(":")[0]
+                                    self._bound_vars.append(tmp)
+                                else:
+                                    self._bound_vars.append(v)
+                                var_addr = self._get_advanced_variable_addr(v)
+                                self._sp_var_addrs.append(var_addr)
+                            var = None
+
+                    if var is not None:
+                        var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
+                        self._sp_var_addrs.append(var_addr)
+
+            self._package_vars = ListInput(self, self._package_var_addrs, spd=False)
+            self._sp_vars = ListInput(self, self._sp_var_addrs)
+
     def __repr__(self):
         s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
         s += " Advanced Package, variables only accessible through\n"
         s += " get_advanced_var() and set_advanced_var() methods"
         return s
+
+    def _set_advanced_variable_addrs(self, block, attr):
+        """
+        General method for setting advanced variable block addresses
+        to their attributes. Method is used to reduce code duplication
+
+        Parameters
+        ----------
+        block : str
+            data block key
+        attr : str
+            attribute name
+
+        Returns
+        -------
+            None
+        """
+        var_addrs = []
+        if block in self._adv_var_dict:
+            for var in self._adv_var_dict[block]:
+                if not isinstance(var, tuple):
+                    var_addrs.append(self._get_advanced_variable_addr(var))
+                else:
+                    for v in var:
+                        var_addrs.append(self._get_advanced_variable_addr(v))
+
+        setattr(self, attr, var_addrs)
+
+    def _get_advanced_variable_addr(self, var_str):
+        """
+        Method to create variable addresses for advanced packages that can
+        include non-standard logic and processing instructions
+
+        Parameters
+        ----------
+        var_str : str
+
+        Returns
+        -------
+            var_addr : str
+        """
+        s = f"{self.model.name}/{self.pkg_name}/{var_str.upper()}"
+        return s
+
+    @property
+    def packagedata(self):
+        """
+        Returns a BlockInput object of the packagedata
+        """
+        return self._package_vars
+
+    @packagedata.setter
+    def packagedata(self, recarray):
+        """
+        Setter method to update the packagedata
+
+        Parameters
+        ----------
+        recarray : np.recarray, ListInput, or None
+
+        """
+        if self._package_vars is not None:
+            if isinstance(recarray, np.recarray):
+                self._package_vars.values = recarray
+            elif isinstance(recarray, ListInput):
+                self._package_vars.values = recarray.values
+            elif recarray is None:
+                self._package_vars.values = recarray
+            else:
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
+
+    @property
+    def maxbound(self):
+        """
+        Returns the "maxbound" value for the stress period
+        """
+        if self._sp_vars is not None:
+            return self._sp_vars._maxbound[0]
+
+    @property
+    def stress_period_data(self):
+        """
+        Returns a ListInput object of the current stress_period_data
+        """
+        return self._sp_vars
+
+    @stress_period_data.setter
+    def stress_period_data(self, recarray):
+        """
+        Setter method to update the current stress_period_data
+        """
+        if self._sp_vars is not None:
+            if isinstance(recarray, np.recarray):
+                self._sp_vars.values = recarray
+            elif isinstance(recarray, ListInput):
+                self._sp_vars.values = recarray.values
+            elif recarray is None:
+                self._sp_vars.values = recarray
+            else:
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
 
 class ApiSlnPackage(ScalarPackage):

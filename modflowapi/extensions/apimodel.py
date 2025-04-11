@@ -1,8 +1,7 @@
 import numpy as np
 
+from .datamodel import get_package_type, gridshape
 from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
-
-gridshape = {"dis": ["nlay", "nrow", "ncol"], "disu": ["nlay", "ncpl"]}
 
 
 class ApiMbase:
@@ -15,16 +14,16 @@ class ApiMbase:
         initialized ModflowApi object
     name : str
         modflow model name. ex. "GWF_1", "GWF-GWF_1"
-    pkg_types : dict
-        dictionary of package types and ApiPackage class types
+    pkg_types : None, dict
+        optional dictionary of package types and ApiPackage class types
     """
 
-    def __init__(self, mf6, name, pkg_types):
+    def __init__(self, mf6, name, pkg_types=None):
         self.mf6 = mf6
         self.name = name
         self._pkg_names = None
         self._pak_type = None
-        self.pkg_types = pkg_types
+        self._pkg_types = pkg_types
         self.package_dict = {}
         self._set_package_names()
         self._create_package_list()
@@ -73,10 +72,13 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if pkg_type in self.pkg_types:
-                basepackage = self.pkg_types[pkg_type]
+            if self._pkg_types is None:
+                basepackage = get_package_type(pkg_type)
             else:
-                basepackage = AdvancedPackage
+                if pkg_type in self._pkg_types:
+                    basepackage = self._pkg_types[pkg_type]
+                else:
+                    basepackage = AdvancedPackage
 
             package = package_factory(pkg_type, basepackage)
             adj_pkg_name = "".join(pkg_type.split("-"))
@@ -135,33 +137,6 @@ class ApiModel(ApiMbase):
         else:
             raise AssertionError(f"Unrecognized discretization type {grid_type}")
 
-        pkg_types = {
-            "dis": ArrayPackage,
-            "chd": ListPackage,
-            "drn": ListPackage,
-            "evt": ListPackage,
-            "ghb": ListPackage,
-            "ic": ArrayPackage,
-            "npf": ArrayPackage,
-            "rch": ListPackage,
-            "riv": ListPackage,
-            "sto": ArrayPackage,
-            "wel": ListPackage,
-            # gwt
-            "dsp": ArrayPackage,
-            "cnc": ListPackage,
-            "ist": ArrayPackage,
-            "mst": ArrayPackage,
-            "src": ListPackage,
-            # gwe
-            "cnd": ArrayPackage,
-            "est": ArrayPackage,
-            "cpt": ListPackage,
-            "esl": ListPackage,
-            # prt
-            "mip": ArrayPackage,
-        }
-
         self.allow_convergence = True
         self._shape = None
         self._size = None
@@ -169,7 +144,7 @@ class ApiModel(ApiMbase):
         self._usertonode = None
         self._iteration = 0
 
-        super().__init__(mf6, name, pkg_types)
+        super().__init__(mf6, name)
 
     def __repr__(self):
         s = f"{self.name}, "
