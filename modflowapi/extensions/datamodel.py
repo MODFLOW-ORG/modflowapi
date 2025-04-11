@@ -270,14 +270,7 @@ adv_pkgvars = {
         ],
     },
     "lak": {
-        "packagedata": [
-            "nlakes",
-            (
-                "ifno:range:nlakes",
-                "strt",
-                "nlakeconn"
-            )
-        ],
+        "packagedata": ["nlakes", ("ifno:range:nlakes", "strt", "nlakeconn")],
     },
 }
 
