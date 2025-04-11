@@ -115,7 +115,7 @@ class ListInput:
                     setattr(self, f"_{reduced}", values)
                     if not self._spd and reduced == "maxbound":
                         self._nbound = values
-                elif reduced in ("nexg", "maxats", "nlakes"):
+                elif reduced in ("nexg", "maxats", "nlakes", "nmawwells"):
                     setattr(self, "_maxbound", values)
                     setattr(self, "_nbound", values)
                 elif reduced in ("naux",):

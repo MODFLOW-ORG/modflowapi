@@ -67,7 +67,7 @@ class LakPackage(AdvancedPackage):
         super().__init__(model, pkg_type, pkg_name, sim_package)
 
 
-class MawPackage:
+class MawPackage(AdvancedPackage):
     """
     Container for MAW and MAW like packages
 

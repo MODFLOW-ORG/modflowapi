@@ -272,11 +272,12 @@ adv_pkgvars = {
     "lak": {
         "packagedata": ["nlakes", ("ifno:range:nlakes", "strt", "nlakeconn")],
     },
+    "maw": {"packagedata": ["nmawwells", ("ifno:range:nmawwells", "radius", "bot", "strt", "ngwfnodes")]},
 }
 
 
 def get_package_type(pkg_type):
-    from .advpaks import LakPackage, SfrPakage, UzfPackage
+    from .advpaks import LakPackage, MawPackage, SfrPakage, UzfPackage
     from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
 
     pkg_types = {
@@ -295,7 +296,7 @@ def get_package_type(pkg_type):
         "sfr": SfrPakage,
         "uzf": UzfPackage,
         "lak": LakPackage,
-        # "maw": None,
+        "maw": MawPackage,
         # "csub": None,
         # gwt
         "dsp": ArrayPackage,
