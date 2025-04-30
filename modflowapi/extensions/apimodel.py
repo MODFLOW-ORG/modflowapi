@@ -315,7 +315,7 @@ class ApiModel(ApiMbase):
         """
         x = self.mf6.get_value(self.mf6.get_var_address("X", self.name))
         array = np.full(self.size, np.nan)
-        array[self.nodetouser] = x
+        array[self.nodetouser] = x[: self.nodetouser.size]
         return array.reshape(self.shape)
 
     def _set_node_mapping(self):
