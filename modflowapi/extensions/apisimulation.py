@@ -305,6 +305,8 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.lower() in models or name == "TDIS":
                     continue
+                if name.startswith("GWTIM") or name.startswith("GWFIM") or name.startswith("GWEIM"):
+                    continue
                 if id_var_addr not in variables:
                     continue
 
