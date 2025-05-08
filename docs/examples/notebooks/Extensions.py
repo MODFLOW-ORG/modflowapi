@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.7
+#       jupytext_version: 1.14.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -275,6 +275,10 @@ wel.get_advanced_var("ibcnum")
 # Let's close the existing modflowapi shared library object and look at an example of how this is all
 # used in practice.
 
+mf6.prepare_solve(model.solution_id)
+mf6.solve(model.solution_id)
+mf6.finalize_solve(model.solution_id)
+mf6.finalize_time_step()
 mf6.finalize()
 
 # # Putting it all together and running a modflowapi simulation
