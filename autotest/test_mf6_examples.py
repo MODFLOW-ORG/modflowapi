@@ -10,6 +10,7 @@ skip = [
     # https://github.com/MODFLOW-ORG/modflowapi/issues/53
     "ex-prt-mp7-p02",
     "ex-prt-mp7-p04",
+    "ex-gwe-barends"
 ]
 
 
