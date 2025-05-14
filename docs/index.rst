@@ -14,6 +14,7 @@ An extension to `xmipy` for the MODFLOW API.
    :caption: User Guide
 
    examples/notebooks/Quickstart
+   examples/notebooks/Extensions
    examples/notebooks/Head_Monitor_Example
 
 .. autosummary::
