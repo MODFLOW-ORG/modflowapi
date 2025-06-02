@@ -275,6 +275,10 @@ wel.get_advanced_var("ibcnum")
 # Let's close the existing modflowapi shared library object and look at an example of how this is all
 # used in practice.
 
+# Note: the full prepare/solve/finalize sequence below is temporarily required to work around a bug
+# in MODFLOW 6. The bug has been patched, but the patch has not been released yet. The sequence can
+# be reduced to just `mf6.finalize()` when the patch is released.
+
 mf6.prepare_solve(model.solution_id)
 mf6.solve(model.solution_id)
 mf6.finalize_solve(model.solution_id)
