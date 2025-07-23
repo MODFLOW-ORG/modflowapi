@@ -55,6 +55,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
     callback(sim, Callbacks.initialize)
 
     has_converged = False
+    failed_timesteps = 0
     current_time = mf6.get_current_time()
     end_time = mf6.get_end_time()
     kperold = [0 for _ in range(sim.subcomponent_count)]
@@ -115,7 +116,10 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         current_time = mf6.get_current_time()
 
         if not has_converged:
-            print(f"Simulation group: {sim_grp} DID NOT CONVERGE")
+            failed_timesteps += 1
+            msg = f".........Stress Period {sim_grp.kper + 1}; "
+            msg += f"Timestep {sim_grp.kstp + 1} did not converge"
+            print(msg)
 
     try:
         callback(sim, Callbacks.finalize)
@@ -123,4 +127,9 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
     except Exception:
         raise RuntimeError("MF6 simulation failed, check listing file")
 
-    print("NORMAL TERMINATION OF SIMULATION")
+    if failed_timesteps > 0:
+        msg = "\nAbnormal termination of simulation.\n"
+        msg += f"Convergence failed {failed_timesteps} times."
+        print(msg)
+    else:
+        print("\nNormal termination of simulation.")
