@@ -42,7 +42,7 @@ dependencies = [
 dev = ["modflowapi[test,lint]"]
 test = [
     "filelock",
-    "modflow-devtools[dfn] @ git+https://github.com/MODFLOW-ORG/modflow-devtools.git",
+    "modflow-devtools>=1.7.0",
     "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
@@ -82,10 +82,6 @@ packages = ["modflowapi"]
 
 [tool.hatch.version]
 path = "modflowapi/version.py"
-
-[tool.hatch.metadata]
-# temporary, until new devtools release
-allow-direct-references = true
 
 [tool.ruff]
 line-length = 120
