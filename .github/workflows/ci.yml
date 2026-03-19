@@ -85,15 +85,17 @@ jobs:
         run: uv sync --all-extras
 
       - name: Install Python dependencies
-        run: |
-          uv pip install git+https://git@github.com/Deltares/xmipy@develop
-          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
+        run: uv pip install git+https://git@github.com/Deltares/xmipy@develop
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
         with:
           path: ${{ github.workspace }}/autotest
           repo: modflow6-nightly-build
+
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
 
       - name: Run autotests
         working-directory: ./autotest
@@ -126,9 +128,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Install Python dependencies
-        run: |
-          uv pip install git+https://git@github.com/Deltares/xmipy@develop
-          uv pip install git+https://git@github.com/MODFLOW-ORG/modflow-devtools@develop
+        run: uv pip install git+https://git@github.com/Deltares/xmipy@develop
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
@@ -136,6 +136,10 @@ jobs:
           path: ${{ github.workspace }}/autotest
           repo: executables
           tag: "14.0"
+
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
 
       - name: Run autotests
         working-directory: ./autotest
@@ -172,6 +176,10 @@ jobs:
         with:
           path: ${{ github.workspace }}/autotest
           repo: modflow6-nightly-build
+
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
 
       - name: Run autotests
         working-directory: ./autotest
