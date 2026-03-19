@@ -42,7 +42,7 @@ dependencies = [
 dev = ["modflowapi[test,lint]"]
 test = [
     "filelock",
-    "modflow-devtools>=1.7.0",
+    "modflow-devtools[test,dfn,models]>=1.9.1,<2",
     "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
