@@ -64,3 +64,14 @@ For more info on MODFLOW 6 see [the USGS overview](https://water.usgs.gov/ogw/mo
 ## Citation
 
 Hughes, Joseph D., Russcher, M. J., Langevin, C. D., Morway, E. D. and McDonald, R. R., 2022, The MODFLOW Application Programming Interface for simulationcontrol and software interoperability: Environmental Modelling & Software, v. 148, p. 105257, [doi:10.1016/j.envsoft.2021.105257](https://doi.org/10.1016/j.envsoft.2021.105257).
+
+### ***Papers featuring the MODFLOW 6 API***
+
+[White, J.T., Ewing, J.E., Ruskauff, G., and Rashid, H., 2023. A generic closed-loop contaminant treatment system package for MODFLOW 6. Groundwater v. 61, no. 1: 131–138. https://doi.org/10.1111/gwat.13239.](https://doi.org/10.1111/gwat.13239)
+
+[Larsen, J.D., Langevin, C.D., Hughes, J.D. and Niswonger, R.G., 2024. An Agricultural Package for MODFLOW 6 using the application programming interface. Groundwater v. 62, no. 1: 157-166. https://doi.org/10.1111/gwat.13367.](https://doi.org/10.1111/gwat.13367)
+
+[Hayek, M., White, J.T., Markovich, K.H., Hughes, J.D., Lavenue, M., 2025. MF6-ADJ: A non-intrusive adjoint sensitivity capability for MODFLOW 6. Groundwater v. 63, no. 6: 874-888. https://doi.org/10.1111/gwat.70025.](https://doi.org/10.1111/gwat.70025)
+
+[Perez-Illanes, R., Langevin, C.D., Muniruzzaman, M., Rolle, M., 2026. Incorporating electrostatic coupling effects into multispecies solute transport simulations with MODFLOW. Groundwater v. 64, no. 2: 210-222. https://doi.org/10.1111/gwat.70033.](https://doi.org/10.1111/gwat.70033)
+
