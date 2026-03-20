@@ -20,10 +20,12 @@ class ModflowApi(XmiWrapper):
         lib_dependency: str = None,
         working_directory: str = ".",
         timing: bool = False,
+        logger_level: int | str = 0,
     ):
         super().__init__(
             amend_libmf6_path(lib_path),
             lib_dependency=lib_dependency,
             working_directory=working_directory,
             timing=timing,
+            logger_level=logger_level,
         )
