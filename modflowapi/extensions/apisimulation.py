@@ -283,9 +283,25 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.startswith("SLN"):
                     continue
-                elif name.startswith("GWTIM") or name.startswith("GWFIM") or name.startswith("GWEIM"):
+                elif (
+                    name.startswith("GWFIM")
+                    or name.startswith("GWTIM")
+                    or name.startswith("GWEIM")
+                    or name.startswith("PRTIM")
+                    or name.startswith("CHFIM")
+                    or name.startswith("OLFIM")
+                    or name.startswith("SWFIM")
+                ):
                     continue
-                elif name.startswith("GWFCON") or name.startswith("GWTCON") or name.startswith("GWECON"):
+                elif (
+                    name.startswith("GWFCON")
+                    or name.startswith("GWTCON")
+                    or name.startswith("GWECON")
+                    or name.startswith("PRTCON")
+                    or name.startswith("CHFCON")
+                    or name.startswith("OLFCON")
+                    or name.startswith("SWFCON")
+                ):
                     continue
                 if id_var_addr not in variables:
                     continue
@@ -305,7 +321,15 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.lower() in models or name == "TDIS":
                     continue
-                if name.startswith("GWTIM") or name.startswith("GWFIM") or name.startswith("GWEIM"):
+                if (
+                    name.startswith("GWFIM")
+                    or name.startswith("GWTIM")
+                    or name.startswith("GWEIM")
+                    or name.startswith("PRTIM")
+                    or name.startswith("CHFIM")
+                    or name.startswith("OLFIM")
+                    or name.startswith("SWFIM")
+                ):
                     continue
                 if id_var_addr not in variables:
                     continue
