@@ -160,7 +160,7 @@ pkgvars = {
     "gwe-gwe": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
     # simulation
     "ats": [
-        "maxats",
+        ("maxats", ()),
         "iperats",
         "dt0",
         "dtmin",
@@ -274,48 +274,3 @@ adv_pkgvars = {
     },
     "maw": {"packagedata": ["nmawwells", ("ifno:range:nmawwells", "radius", "bot", "strt", "ngwfnodes")]},
 }
-
-
-def get_package_type(pkg_type):
-    from .advpaks import LakPackage, MawPackage, SfrPakage, UzfPackage
-    from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
-
-    pkg_types = {
-        "dis": ArrayPackage,
-        "chd": ListPackage,
-        "drn": ListPackage,
-        "evt": ListPackage,
-        "ghb": ListPackage,
-        "ic": ArrayPackage,
-        "npf": ArrayPackage,
-        "rch": ListPackage,
-        "riv": ListPackage,
-        "sto": ArrayPackage,
-        "wel": ListPackage,
-        # advanced
-        "sfr": SfrPakage,
-        "uzf": UzfPackage,
-        "lak": LakPackage,
-        "maw": MawPackage,
-        # "csub": None,
-        # gwt
-        "dsp": ArrayPackage,
-        "cnc": ListPackage,
-        "ist": ArrayPackage,
-        "mst": ArrayPackage,
-        "src": ListPackage,
-        # gwe
-        "cnd": ArrayPackage,
-        "est": ArrayPackage,
-        "cpt": ListPackage,
-        "esl": ListPackage,
-        # prt
-        "mip": ArrayPackage,
-        # sim_level pkgs
-        "tdis": ScalarPackage,
-        "ats": ListPackage,
-    }
-    if pkg_type in pkg_types:
-        return pkg_types[pkg_type]
-    else:
-        return AdvancedPackage

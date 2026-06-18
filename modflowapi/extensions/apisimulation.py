@@ -2,7 +2,7 @@ import numpy as np
 
 from .apiexchange import ApiExchange
 from .apimodel import ApiMbase, ApiModel
-from .pakbase import ApiSlnPackage, ListPackage, ScalarPackage, package_factory
+from .pakbase import ApiSlnPackage, Package
 
 
 class ApiSimulation:
@@ -35,9 +35,6 @@ class ApiSimulation:
 
         self.tdis = tdis
         self.ats = ats
-        self._ats_active = True
-        if ats is None:
-            self._ats_active = False
 
     def __getattr__(self, item):
         """
@@ -61,7 +58,7 @@ class ApiSimulation:
         if self._exchanges:
             s += "\tExchanges include:\n"
             for name, exchange in self._exchanges.items():
-                f"\t\t{name}: {type(exchange)}\n"
+                s += f"\t\t{name}: {type(exchange)}\n"
 
         return s
 
@@ -71,7 +68,7 @@ class ApiSimulation:
         Returns a boolean to indicate if the ATS package is used in this
         simulation.
         """
-        return self._ats_active
+        return self.ats is not None
 
     @property
     def ats_period(self):
@@ -133,9 +130,7 @@ class ApiSimulation:
         """
         if len(self._solutions) > 1:
             return list(self._solutions.values())
-        else:
-            for sln in self._solutions.values():
-                return sln
+        return next(iter(self._solutions.values()))
 
     @property
     def model_names(self):
@@ -149,15 +144,14 @@ class ApiSimulation:
         """
         Returns a list of exchange GWF-GWF names
         """
-        if self._exchanges.keys():
-            return list(self._exchanges.keys())
+        return list(self._exchanges.keys())
 
     @property
     def models(self):
         """
         Returns a list of ApiModel objects associated with the simulation
         """
-        return [v for _, v in self._models.items()]
+        return list(self._models.values())
 
     @property
     def iteration(self):
@@ -256,8 +250,7 @@ class ApiSimulation:
             raise AssertionError("No exchanges are present in this simulation")
 
         if exchange_name is None:
-            for _, exg in self._exchanges:
-                return exg
+            return next(iter(self._exchanges.values()))
 
         else:
             if exchange_name in self._exchanges:
@@ -283,25 +276,7 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.startswith("SLN"):
                     continue
-                elif (
-                    name.startswith("GWFIM")
-                    or name.startswith("GWTIM")
-                    or name.startswith("GWEIM")
-                    or name.startswith("PRTIM")
-                    or name.startswith("CHFIM")
-                    or name.startswith("OLFIM")
-                    or name.startswith("SWFIM")
-                ):
-                    continue
-                elif (
-                    name.startswith("GWFCON")
-                    or name.startswith("GWTCON")
-                    or name.startswith("GWECON")
-                    or name.startswith("PRTCON")
-                    or name.startswith("CHFCON")
-                    or name.startswith("OLFCON")
-                    or name.startswith("SWFCON")
-                ):
+                elif name[3:5] in ("IM", "CO"):
                     continue
                 if id_var_addr not in variables:
                     continue
@@ -321,22 +296,14 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.lower() in models or name == "TDIS":
                     continue
-                if (
-                    name.startswith("GWFIM")
-                    or name.startswith("GWTIM")
-                    or name.startswith("GWEIM")
-                    or name.startswith("PRTIM")
-                    or name.startswith("CHFIM")
-                    or name.startswith("OLFIM")
-                    or name.startswith("SWFIM")
-                ):
+                if name[3:5] == "IM":
                     continue
                 if id_var_addr not in variables:
                     continue
 
                 solution_names.append(t[0])
 
-        idp_names = [i for i in mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES")]
+        idp_names = list(mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES"))
         solution_types = [
             i[:-1].lower() for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE")) if idp_names[ix]
         ]
@@ -353,30 +320,24 @@ class ApiSimulation:
 
         solutions = solution_dict
 
-        # TDIS package construction
-        tdis_constructor = package_factory("tdis", ScalarPackage)
-        tdis = tdis_constructor(ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True)
+        tdis = Package(tmpmdl, "tdis", "tdis", sim_package=True)
 
         ats = None
-        # ATS package construction
         for variable in variables:
             if variable.startswith("ATS"):
-                ats_constructor = package_factory("ats", ListPackage)
-                ats = ats_constructor(ListPackage, tmpmdl, "ats", "ats", sim_package=True)
+                ats = Package(tmpmdl, "ats", "ats", sim_package=True)
                 break
 
         # get the exchanges
         exchange_names = []
         for variable in variables:
-            if variable.startswith("GWF-GWF") or variable.startswith("GWT-GWT"):
-                exchange_name = variable.split("/")[0]
-                if exchange_name not in exchange_names:
-                    exchange_names.append(exchange_name)
+            exchange_name = variable.split("/")[0]
+            parts = exchange_name.rsplit("_", 1)[0].split("-")
+            if len(parts) == 2 and parts[0] == parts[1] and exchange_name not in exchange_names:
+                exchange_names.append(exchange_name)
 
-        # sim_packages: tdis, gwf-gwf, sln
         exchanges = {}
-        for exchange_name in exchanges:
-            exchange = ApiExchange(mf6, exchange_name)
-            exchanges[exchange_name.lower()] = exchange
+        for exchange_name in exchange_names:
+            exchanges[exchange_name.lower()] = ApiExchange(mf6, exchange_name)
 
         return ApiSimulation(mf6, models, solutions, exchanges, tdis, ats)

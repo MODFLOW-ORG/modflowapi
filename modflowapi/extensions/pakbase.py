@@ -1,158 +1,202 @@
 import numpy as np
 
-from .data import AdvancedInput, ArrayInput, ListInput, ScalarInput
+from .data import AdvancedInput, ArrayVar, ListVar, ScalarVar
 from .datamodel import adv_pkgvars, pkgvars
 
+_BASE_ATTRS = frozenset({"model", "pkg_name", "pkg_type"})
+_ADV_BLOCK_NAMES = frozenset({"packagedata", "perioddata"})
 
-class PackageBase:
+
+class Package:
     """
-    Base class for packages within the modflow-6 api
-
+    Package object for MODFLOW 6 API packages.
 
     Parameters
     ----------
     model : ApiModel
-        modflowapi ApiModel object
+        modflowapi model object
     pkg_type : str
-        package type name. ex. 'wel'
+        package type name, e.g. 'wel'
     pkg_name : str
-        modflow package name. ex. 'wel_0'
-    child_type : str
-        type of child input package
+        package name in the MF6 variables, e.g. 'wel_0'
     sim_package : bool
-        flag to indicate this is a simulation level package
+        flag indicating this is a simulation-level package
     """
 
-    def __init__(self, model, pkg_type, pkg_name, child_type, sim_package):
+    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
         self.model = model
-        self.pkg_name = pkg_name
         self.pkg_type = pkg_type
-        self._child_type = child_type
+        self.pkg_name = pkg_name.upper()
         self._sim_package = sim_package
         self._rhs = None
         self._hcof = None
         self._bound_vars = []
         self._advanced_var_names = None
         self._idm_enabled = False
+        self._inputs = {}
 
+        self._variables_adv = None
+        self._build_inputs()
+
+    # ------------------------------------------------------------------
+    # Input construction
+    # ------------------------------------------------------------------
+
+    def _build_inputs(self):
+        if self.pkg_type in adv_pkgvars:
+            self._build_advanced_inputs()
+        elif self.pkg_type in pkgvars and any(isinstance(v, tuple) for v in pkgvars[self.pkg_type]):
+            self._build_list_inputs(pkgvars[self.pkg_type])
+        elif self.pkg_type in pkgvars:
+            self._build_plain_inputs(pkgvars[self.pkg_type])
+
+    def _build_list_inputs(self, vars_list):
         var_addrs = []
-        if self._child_type != "advanced":
-            for var in pkgvars[self.pkg_type]:
-                if isinstance(var, tuple):
-                    bound_vars = []
-                    for bv in var[-1]:
-                        t = bv.split(":")
-                        if len(t) == 2:
-                            # this is a repeating variable
-                            addr = self.model.mf6.get_var_address(t[-1].upper(), self.model.name, self.pkg_name)
-                            nrep = self.model.mf6.get_value(addr)[0]
-                            if nrep > 1:
-                                for rep in range(nrep):
-                                    bound_vars.append(f"{t[0]}{rep}")
-                            else:
-                                bound_vars.append(t[0])
-                        else:
-                            bound_vars.append(t[0])
-
-                    self._bound_vars = var[-1]
-                    var = var[0]
-
-                if sim_package:
-                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.pkg_name))
-                else:
-                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
+        for var in vars_list:
+            if isinstance(var, tuple):
+                self._bound_vars = var[-1]
+                var = var[0]
+            if self._sim_package:
+                var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.pkg_name))
+            else:
+                var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
 
         for var in self._bound_vars:
             addr_chk = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
             if addr_chk in self.model.mf6.get_input_var_names():
-                # change this to use idm
                 self._idm_enabled = True
                 var_addrs.append(addr_chk)
 
-        self.var_addrs = var_addrs
-        self._variables_adv = AdvancedInput(self)
+        self._inputs["stress_period_data"] = ListVar(self, var_addrs, spd=True)
+
+    def _build_plain_inputs(self, vars_list):
+        ivn = self.model.mf6.get_input_var_names()
+        for var in vars_list:
+            if self._sim_package:
+                addr = self.model.mf6.get_var_address(var.upper(), self.pkg_name)
+            else:
+                addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
+            if addr not in ivn:
+                continue
+            name = var.lower()
+            if self._sim_package:
+                self._inputs[name] = ScalarVar(name, self.model.mf6.get_value_ptr(addr))
+            else:
+                arr_var = ArrayVar(self, addr)
+                if arr_var.name is not None:
+                    self._inputs[name] = arr_var
+
+    def _build_advanced_inputs(self):
+        adv_var_dict = adv_pkgvars[self.pkg_type]
+
+        pkg_var_addrs = self._collect_adv_var_addrs(adv_var_dict, "packagedata")
+        if pkg_var_addrs:
+            self._inputs["packagedata"] = ListVar(self, pkg_var_addrs, spd=False)
+
+        sp_var_addrs = []
+        if "perioddata" in adv_var_dict:
+            for var in adv_var_dict["perioddata"]:
+                if isinstance(var, tuple):
+                    use_bound = all(":" not in v for v in var[-1])
+                    if use_bound:
+                        self._bound_vars = var[-1]
+                        var = var[0]
+                    else:
+                        for v in var[-1]:
+                            if ":" in v:
+                                self._bound_vars.append(v.split(":")[0])
+                            else:
+                                self._bound_vars.append(v)
+                            sp_var_addrs.append(self._adv_var_addr(v))
+                        var = None
+                if var is not None:
+                    sp_var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
+
+        if sp_var_addrs:
+            self._inputs["stress_period_data"] = ListVar(self, sp_var_addrs, spd=True)
+
+        for block in adv_var_dict:
+            if block in _ADV_BLOCK_NAMES:
+                continue
+            var_addrs = self._collect_adv_var_addrs(adv_var_dict, block)
+            if var_addrs:
+                self._inputs[block] = ListVar(self, var_addrs, spd=False, name=block)
+
+    def _collect_adv_var_addrs(self, adv_var_dict, block):
+        var_addrs = []
+        if block in adv_var_dict:
+            for var in adv_var_dict[block]:
+                if not isinstance(var, tuple):
+                    var_addrs.append(self._adv_var_addr(var))
+                else:
+                    for v in var:
+                        var_addrs.append(self._adv_var_addr(v))
+        return var_addrs
+
+    def _adv_var_addr(self, var_str):
+        return f"{self.model.name}/{self.pkg_name}/{var_str.upper()}"
+
+    # ------------------------------------------------------------------
+    # Attribute dispatch
+    # ------------------------------------------------------------------
+
+    def __repr__(self):
+        s = f"{self.pkg_type.upper()} Package: {self.pkg_name}\n"
+        names = self.variable_names
+        if names:
+            s += " Accessible variables include:\n"
+            for name in names:
+                s += f"  {name}\n"
+        return s
+
+    def __getattr__(self, item):
+        try:
+            inputs = object.__getattribute__(self, "_inputs")
+        except AttributeError:
+            raise AttributeError(item)
+        if item in inputs:
+            v = inputs[item]
+            return v.values if isinstance(v, ScalarVar) else v
+        raise AttributeError(item)
+
+    def __setattr__(self, item, value):
+        if item.startswith("_") or item in _BASE_ATTRS:
+            object.__setattr__(self, item, value)
+            return
+        try:
+            inputs = object.__getattribute__(self, "_inputs")
+        except AttributeError:
+            object.__setattr__(self, item, value)
+            return
+        if item in inputs:
+            inputs[item].values = value
+            return
+        raise AttributeError(f"{item} is not a valid attribute for {self.pkg_type}")
+
+    # ------------------------------------------------------------------
+    # Static properties
+    # ------------------------------------------------------------------
 
     @property
-    def advanced_vars(self):
-        """
-        Returns a list of additional "advanced" variables that are
-        accessible through the API
-        """
-        if self._advanced_var_names is None:
-            adv_vars = []
-            for var_addr in self.model.mf6.get_input_var_names():
-                is_advanced = False
-                t = var_addr.split("/")
-                if not self._sim_package:
-                    if t[0] == self.model.name and t[1] == self.pkg_name:
-                        is_advanced = self._check_if_advanced_var(t[-1])
-                else:
-                    if t[0] == self.pkg_name:
-                        is_advanced = self._check_if_advanced_var(t[-1])
+    def variable_names(self):
+        """Returns a sorted list of non-list variable names accessible through the API."""
+        return sorted(n for n, v in self._inputs.items() if not isinstance(v, ListVar))
 
-                if is_advanced:
-                    adv_vars.append(t[-1].lower())
+    @property
+    def _spd_var(self):
+        return next((v for v in self._inputs.values() if isinstance(v, ListVar) and v._spd), None)
 
-            self._advanced_var_names = adv_vars
-        return self._advanced_var_names
+    @property
+    def nbound(self):
+        """Returns the number of active boundaries for the current stress period."""
+        lv = self._spd_var
+        return lv._nbound[0] if lv is not None else None
 
-    def _check_if_advanced_var(self, variable_name):
-        """
-        Method to check if a variable is an advanced variable
-
-        Parameters
-        ----------
-        variable_name : str
-            variable name to check
-
-        Returns
-        -------
-            bool
-        """
-        if variable_name.lower() in self._bound_vars:
-            is_advanced = False
-        elif self.pkg_type not in pkgvars:
-            is_advanced = True
-        elif variable_name.lower() in pkgvars[self.pkg_type]:
-            is_advanced = False
-        else:
-            is_advanced = True
-        return is_advanced
-
-    def get_advanced_var(self, name):
-        """
-        Method to get an advanced variable that is not automatically
-        accessible through stress period data or as an array name
-        """
-        name = name.lower()
-        if name not in self.advanced_vars:
-            raise AssertionError(f"{name} is not accessible as an advanced variable for this package")
-
-        values = self._variables_adv.get_variable(name)
-        if not self._sim_package:
-            if values.size == self.model.nodetouser.size and self._child_type == "array":
-                array = np.full(self.model.size, np.nan)
-                array[self.model.nodetouser] = values
-                return array
-
-        return values
-
-    def set_advanced_var(self, name, values):
-        """
-        Method to set data to an advanced variable
-
-        Parameters
-        ----------
-        name : str
-            parameter name
-        values : np.ndarray
-            numpy array
-        """
-        if not self._sim_package:
-            if self._child_type == "array" and values.size == self.model.size:
-                values = values[self.model.nodetouser]
-
-        self._variables_adv.set_variable(name, values)
+    @property
+    def maxbound(self):
+        """Returns the maximum number of boundaries."""
+        lv = self._spd_var
+        return lv._maxbound[0] if lv is not None else None
 
     @property
     def rhs(self):
@@ -162,8 +206,7 @@ class PackageBase:
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._rhs = self.model.mf6.get_value_ptr(var_addr)
                 else:
-                    return
-
+                    return None
         return np.copy(self._rhs)
 
     @rhs.setter
@@ -172,7 +215,6 @@ class PackageBase:
             rhs = self.rhs
             if rhs is None:
                 raise Exception(f"{self.pkg_type} does not have a rhs array")
-
         self._rhs[:] = values[:]
 
     @property
@@ -183,8 +225,7 @@ class PackageBase:
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._hcof = self.model.mf6.get_value_ptr(var_addr)
                 else:
-                    return
-
+                    return None
         return np.copy(self._hcof)
 
     @hcof.setter
@@ -193,440 +234,135 @@ class PackageBase:
             hcof = self.hcof
             if hcof is None:
                 raise Exception(f"{self.pkg_type} does not have an hcof array")
-
         self._hcof[:] = values[:]
 
-
-class ListPackage(PackageBase):
-    """
-    Package object for "list based" input packages such as WEL, DRN, RCH
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "RCH"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        flag to indicate this is a simulation level package
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name.upper(), "list", sim_package)
-
-        self._variables = ListInput(self)
-
-    def __repr__(self):
-        s = f"{self.pkg_type.upper()} Package: {self.pkg_name}"
-        return s
-
     @property
-    def nbound(self):
-        """
-        Returns the "nbound" value for the stress period
-        """
-        return self._variables._nbound[0]
+    def advanced_vars(self):
+        """Returns a list of additional variables accessible through get/set_advanced_var."""
+        if self._advanced_var_names is None:
+            adv_vars = []
+            for var_addr in self.model.mf6.get_input_var_names():
+                t = var_addr.split("/")
+                is_advanced = False
+                if not self._sim_package:
+                    if t[0] == self.model.name and t[1] == self.pkg_name:
+                        is_advanced = self._check_if_advanced_var(t[-1])
+                else:
+                    if t[0] == self.pkg_name:
+                        is_advanced = self._check_if_advanced_var(t[-1])
+                if is_advanced:
+                    adv_vars.append(t[-1].lower())
+            self._advanced_var_names = adv_vars
+        return self._advanced_var_names
 
-    @property
-    def maxbound(self):
-        """
-        Returns the "maxbound" value for the stress period
-        """
-        return self._variables._maxbound[0]
+    def _check_if_advanced_var(self, variable_name):
+        if variable_name.lower() in self._bound_vars:
+            return False
+        if self.pkg_type not in pkgvars:
+            return True
+        if variable_name.lower() in pkgvars[self.pkg_type]:
+            return False
+        return True
 
-    @property
-    def stress_period_data(self):
-        """
-        Returns a ListInput object of the current stress_period_data
-        """
-        return self._variables
+    def get_advanced_var(self, name):
+        """Get a variable not surfaced through stress_period_data or variable_names."""
+        name = name.lower()
+        if name not in self.advanced_vars:
+            raise AssertionError(f"{name} is not accessible as an advanced variable for this package")
+        if self._variables_adv is None:
+            self._variables_adv = AdvancedInput(self)
+        values = self._variables_adv.get_variable(name)
+        if not self._sim_package:
+            if values.size == self.model.nodetouser.size:
+                array = np.full(self.model.size, np.nan)
+                array[self.model.nodetouser] = values
+                return array
+        return values
 
-    @stress_period_data.setter
-    def stress_period_data(self, recarray):
-        """
-        Setter method to update the current stress_period_data
-        """
-        if isinstance(recarray, np.recarray):
-            self._variables.values = recarray
-        elif isinstance(recarray, ListInput):
-            self._variables.values = recarray.values
-        elif recarray is None:
-            self._variables.values = recarray
-        else:
-            raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
+    def set_advanced_var(self, name, values):
+        """Set a variable not surfaced through stress_period_data or variable_names."""
+        if not self._sim_package:
+            if values.size == self.model.size:
+                values = values[self.model.nodetouser]
+        if self._variables_adv is None:
+            self._variables_adv = AdvancedInput(self)
+        self._variables_adv.set_variable(name, values)
 
-
-class ArrayPackage(PackageBase):
-    """
-    Package object for "array based" input packages such as NPF, DIS,
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "DIS"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        flag to indicate this is a simulation level package
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name.upper(), "array", sim_package)
-
-        self._variables = ArrayInput(self)
-
-    def __repr__(self):
-        s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
-        s += " Accessible variables include:\n"
-        for var_name in self.variable_names:
-            s += f" {var_name} \n"
-        return s
-
-    def __setattr__(self, item, value):
-        """
-        Method that enables dynamic variable setting and distributes
-        modflow variable storage and updates to the data object class
-        """
-        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
-            super().__setattr__(item, value)
-
-        elif item.startswith("_"):
-            super().__setattr__(item, value)
-
-        elif item in self._variables._ptrs:
-            self._variables.set_ptr(item, value)
-
-        else:
-            raise AttributeError(f"{item}")
-
-    def __getattr__(self, item):
-        """
-        Method to dynamically get modflow variables by attribute
-        """
-        if item in self._variables._ptrs:
-            return self._variables.get_ptr(item)
-        else:
-            return super().__getattribute__(item)
-
-    @property
-    def variable_names(self):
-        """
-        Returns a list of valid modflow variable names that the user can access
-        """
-        return self._variables.variable_names
+    # ------------------------------------------------------------------
+    # Explicit accessor methods (backward compatibility)
+    # ------------------------------------------------------------------
 
     def get_array(self, item):
-        """
-        Method to get an array from modflow
-
-        Parameters
-        ----------
-        item : str
-            modflow variable name. Ex. "k11"
-
-        Returns
-        -------
-        np.array of modflow data
-        """
-        return self._variables.get_array(item)
+        """Get a grid-shaped array variable by name."""
+        v = self._inputs.get(item)
+        if v is None or not isinstance(v, ArrayVar):
+            raise KeyError(f"{item} is not accessible in this package")
+        return v.values
 
     def set_array(self, item, array):
-        """
-        Method to update the modflow pointer arrays
-
-        Parameters
-        ----------
-        item : str
-            modflow variable name. Ex. "k11"
-        array : np.array
-            numpy array
-
-        """
-        self._variables.set_array(item, array)
-
-
-class ScalarPackage(PackageBase):
-    """
-    Container for advanced data packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "RCH"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name.upper(), "scalar", sim_package)
-
-        self._variables = ScalarInput(self)
-
-    def __repr__(self):
-        s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
-        s += " Accessible variables include:\n"
-        for var_name in self.variable_names:
-            s += f" {var_name} \n"
-        return s
-
-    def __setattr__(self, item, value):
-        """
-        Method that enables dynamic variable setting and distributes
-        modflow variable storage and updates to the data object class
-        """
-        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
-            super().__setattr__(item, value)
-
-        elif item.startswith("_"):
-            super().__setattr__(item, value)
-
-        elif item in self._variables._ptrs:
-            self._variables.set_value(item, value)
-
-        elif item in ("mxiter",):
-            # hack for sln-ems
-            super().__setattr__(item, value)
-
-        else:
-            raise AttributeError(f"{item}")
-
-    def __getattr__(self, item):
-        """
-        Method to dynamically get modflow variables by attribute
-        """
-        if item in self._variables._ptrs:
-            return self._variables.get_value(item)
-        else:
-            return super().__getattribute__(item)
-
-    @property
-    def variable_names(self):
-        """
-        Returns a list of valid modflow variable names that the user can access
-        """
-        return self._variables.variable_names
+        """Set a grid-shaped array variable by name."""
+        v = self._inputs.get(item)
+        if v is None or not isinstance(v, ArrayVar):
+            raise KeyError(f"{item} is not a valid variable name for this package")
+        v.values = array
 
     def get_value(self, item):
-        """
-        Method to get a scalar value from modflow
-
-        Parameters
-        ----------
-        item : str
-            modflow variable name. Ex. "NBOUND"
-
-        Returns
-        -------
-        np.array of modflow data
-        """
-        return self._variables.get_value(item)
+        """Get a scalar variable by name."""
+        v = self._inputs.get(item)
+        if v is None or not isinstance(v, ScalarVar):
+            raise KeyError(f"{item} is not accessible in this package")
+        return v.values
 
     def set_value(self, item, value):
-        """
-        Method to update the modflow pointer arrays
-
-        Parameters
-        ----------
-        item : str
-            modflow variable name. Ex. "k11"
-        array : str, int, float
-            scalar value
-
-        """
-        self._variables.set_value(item, value)
+        """Set a scalar variable by name."""
+        v = self._inputs.get(item)
+        if v is None or not isinstance(v, ScalarVar):
+            raise KeyError(f"{item} is not accessible in this package")
+        v.values = value
 
 
-class AdvancedPackage(PackageBase):
+# ------------------------------------------------------------------
+# Marker subclasses — preserve isinstance compatibility
+# ------------------------------------------------------------------
+
+
+class PackageBase(Package):
+    pass
+
+
+class ListPackage(Package):
+    pass
+
+
+class ArrayPackage(Package):
+    pass
+
+
+class ScalarPackage(Package):
+    pass
+
+
+class AdvancedPackage(Package):
+    pass
+
+
+# ------------------------------------------------------------------
+# Solution package
+# ------------------------------------------------------------------
+
+
+class ApiSlnPackage(Package):
     """
-    Container for advanced data packages
+    Class to access solution packages.
 
     Parameters
     ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "RCH"
+    sim : ApiSimulation or ApiMbase
+        simulation object
     pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
-
-        self._idm_enabled = False
-        self._package_var_addrs = []
-        self._sp_var_addrs = []
-        self._package_vars = None
-        self._sp_vars = None
-
-        if pkg_type in adv_pkgvars:
-            self._adv_var_dict = adv_pkgvars[pkg_type]
-
-            self._set_advanced_variable_addrs("packagedata", "_package_var_addrs")
-
-            if "perioddata" in self._adv_var_dict:
-                # create variable addresses!!!!
-                for var in self._adv_var_dict["perioddata"]:
-                    if isinstance(var, tuple):
-                        use_bound = True
-                        for v in var[-1]:
-                            if ":" in v:
-                                use_bound = False
-
-                        if use_bound:
-                            self._bound_vars = var[-1]
-                            var = var[0]
-                        else:
-                            for v in var[-1]:
-                                if ":" in v:
-                                    tmp = v.split(":")[0]
-                                    self._bound_vars.append(tmp)
-                                else:
-                                    self._bound_vars.append(v)
-                                var_addr = self._get_advanced_variable_addr(v)
-                                self._sp_var_addrs.append(var_addr)
-                            var = None
-
-                    if var is not None:
-                        var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
-                        self._sp_var_addrs.append(var_addr)
-
-            self._package_vars = ListInput(self, self._package_var_addrs, spd=False)
-            self._sp_vars = ListInput(self, self._sp_var_addrs)
-
-    def __repr__(self):
-        s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
-        s += " Advanced Package, variables only accessible through\n"
-        s += " get_advanced_var() and set_advanced_var() methods"
-        return s
-
-    def _set_advanced_variable_addrs(self, block, attr):
-        """
-        General method for setting advanced variable block addresses
-        to their attributes. Method is used to reduce code duplication
-
-        Parameters
-        ----------
-        block : str
-            data block key
-        attr : str
-            attribute name
-
-        Returns
-        -------
-            None
-        """
-        var_addrs = []
-        if block in self._adv_var_dict:
-            for var in self._adv_var_dict[block]:
-                if not isinstance(var, tuple):
-                    var_addrs.append(self._get_advanced_variable_addr(var))
-                else:
-                    for v in var:
-                        var_addrs.append(self._get_advanced_variable_addr(v))
-
-        setattr(self, attr, var_addrs)
-
-    def _get_advanced_variable_addr(self, var_str):
-        """
-        Method to create variable addresses for advanced packages that can
-        include non-standard logic and processing instructions
-
-        Parameters
-        ----------
-        var_str : str
-
-        Returns
-        -------
-            var_addr : str
-        """
-        s = f"{self.model.name}/{self.pkg_name}/{var_str.upper()}"
-        return s
-
-    @property
-    def packagedata(self):
-        """
-        Returns a BlockInput object of the packagedata
-        """
-        return self._package_vars
-
-    @packagedata.setter
-    def packagedata(self, recarray):
-        """
-        Setter method to update the packagedata
-
-        Parameters
-        ----------
-        recarray : np.recarray, ListInput, or None
-
-        """
-        if self._package_vars is not None:
-            if isinstance(recarray, np.recarray):
-                self._package_vars.values = recarray
-            elif isinstance(recarray, ListInput):
-                self._package_vars.values = recarray.values
-            elif recarray is None:
-                self._package_vars.values = recarray
-            else:
-                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
-
-    @property
-    def maxbound(self):
-        """
-        Returns the "maxbound" value for the stress period
-        """
-        if self._sp_vars is not None:
-            return self._sp_vars._maxbound[0]
-
-    @property
-    def stress_period_data(self):
-        """
-        Returns a ListInput object of the current stress_period_data
-        """
-        return self._sp_vars
-
-    @stress_period_data.setter
-    def stress_period_data(self, recarray):
-        """
-        Setter method to update the current stress_period_data
-        """
-        if self._sp_vars is not None:
-            if isinstance(recarray, np.recarray):
-                self._sp_vars.values = recarray
-            elif isinstance(recarray, ListInput):
-                self._sp_vars.values = recarray.values
-            elif recarray is None:
-                self._sp_vars.values = recarray
-            else:
-                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
-
-
-class ApiSlnPackage(ScalarPackage):
-    """
-    Class to access solution packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
+        package name in the MF6 variables
     pkg_type : str
-        package type. Ex. "RCH"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    sln_type : str
-        ackronymn for the solution package type, default is "ims"
+        solution type abbreviation, default 'ims'
     """
 
     def __init__(self, sim, pkg_name, pkg_type="ims"):
@@ -634,40 +370,12 @@ class ApiSlnPackage(ScalarPackage):
 
         super().__init__(sim, f"sln-{pkg_type}", pkg_name, sim_package=True)
 
-        if pkg_type in ("ims",):
-            mdl = ApiMbase(sim.mf6, pkg_name.upper(), pkg_types={pkg_type: ScalarPackage})
-            imslin = ScalarPackage(mdl, "ims", "IMSLINEAR")
-            for key, ptr in imslin._variables._ptrs.items():
-                if key in self._variables._ptrs:
-                    key = f"{imslin.pkg_type}_{key}".lower()
-                self._variables._ptrs[key] = ptr
+        if pkg_type == "ims":
+            mdl = ApiMbase(sim.mf6, pkg_name.upper(), pkg_types={pkg_type: Package})
+            imslin = Package(mdl, "ims", "IMSLINEAR", sim_package=True)
+            for key, var in imslin._inputs.items():
+                if key in self._inputs:
+                    key = f"{imslin.pkg_type}_{key}"
+                self._inputs[key] = var
         else:
-            self.mxiter = 10
-
-
-def package_factory(pkg_type, basepackage):
-    """
-    Method to autogenerate unique package "types" from the base packages:
-    ArrayPackage, ListPackage, and AdvancedPackage
-
-    Parameters
-    ----------
-    pkg_type : str
-        package type
-    basepackage : ArrayPackage, ListPackage, or AdvancedPackage
-        a base package type
-
-    Returns
-        Package object : ex. ApiWelPackage
-    """
-
-    # hack for now. need a pkg_type variable for robustness
-    def __init__(self, obj, model, pkg_type, pkg_name, sim_package=False):
-        obj.__init__(self, model, pkg_type, pkg_name, sim_package=sim_package)
-
-    cls_str = "".join(pkg_type.split("-"))
-    cls_str = f"{cls_str[0].upper()}{cls_str[1:]}"
-
-    package = type(f"Api{cls_str}Package", (basepackage,), {"__init__": __init__})
-
-    return package
+            object.__setattr__(self, "mxiter", 10)

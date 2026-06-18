@@ -1,7 +1,9 @@
+import math
+
 import numpy as np
 
-from .datamodel import get_package_type, gridshape
-from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
+from .datamodel import gridshape
+from .pakbase import Package
 
 
 class ApiMbase:
@@ -33,7 +35,7 @@ class ApiMbase:
         """
         Returns a list of package objects for the model
         """
-        return [package for _, package in self.package_dict.items()]
+        return list(self.package_dict.values())
 
     @property
     def package_names(self):
@@ -44,7 +46,7 @@ class ApiMbase:
 
     @property
     def package_types(self):
-        return list(set([package.pkg_type for package in self.package_list]))
+        return list({p.pkg_type for p in self.package_list})
 
     def _set_package_names(self):
         """
@@ -56,11 +58,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                if tmp[0].startswith("GWF-GWF"):
-                    pak_types[tmp[0]] = "GWF-GWF"
-                    pak_types.pop("dis", None)
-                elif tmp[0].startswith("GWT-GWT"):
-                    pak_types[tmp[0]] = "GWT-GWT"
+                parts = tmp[0].rsplit("_", 1)[0].split("-")
+                if len(parts) == 2 and parts[0] == parts[1]:
+                    pak_types[tmp[0]] = tmp[0].rsplit("_", 1)[0]
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
@@ -72,26 +72,17 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if self._pkg_types is None:
-                basepackage = get_package_type(pkg_type)
+            if self._pkg_types is not None and pkg_type in self._pkg_types:
+                pkg_cls = self._pkg_types[pkg_type]
             else:
-                if pkg_type in self._pkg_types:
-                    basepackage = self._pkg_types[pkg_type]
-                else:
-                    basepackage = AdvancedPackage
+                pkg_cls = Package
 
-            package = package_factory(pkg_type, basepackage)
-            adj_pkg_name = "".join(pkg_type.split("-"))
+            adj_pkg_name = "" if "-" in pkg_type else pkg_name
 
-            if adj_pkg_name.lower() in ("gwfgwf", "gwtgwt"):
-                adj_pkg_name = ""
-            else:
-                adj_pkg_name = pkg_name
-
-            package = package(basepackage, self, pkg_type, adj_pkg_name)
+            package = pkg_cls(self, pkg_type, adj_pkg_name)
             self.package_dict[pkg_name.lower()] = package
 
-    def get_package(self, pkg_name) -> ListPackage or ArrayPackage or AdvancedPackage:
+    def get_package(self, pkg_name) -> "Package":
         """
         Method to get a package
 
@@ -160,16 +151,9 @@ class ApiModel(ApiMbase):
         else:
             pass
 
-        s += "Packages accessible include: \n"
-        for typ, baseobj in [
-            ("ArrayPackage", ArrayPackage),
-            ("ListPackage", ListPackage),
-            ("AdvancedPackage", AdvancedPackage),
-        ]:
-            s += f"  {typ} objects:\n"
-            for name, obj in self.package_dict.items():
-                if isinstance(obj, baseobj):
-                    s += f"    {name}: {type(obj)}\n"
+        s += "Packages accessible include:\n"
+        for name, pkg in self.package_dict.items():
+            s += f"  {name}: {pkg.pkg_type.upper()}\n"
 
         return s
 
@@ -263,8 +247,8 @@ class ApiModel(ApiMbase):
         """
         Returns a tuple of the model shape
         """
-        ivn = self.mf6.get_input_var_names()
         if self._shape is None:
+            ivn = self.mf6.get_input_var_names()
             shape_vars = gridshape[self.dis_type]
             shape = []
             for var in shape_vars:
@@ -283,10 +267,7 @@ class ApiModel(ApiMbase):
         Returns the number of nodes in the model
         """
         if self._size is None:
-            size = 1
-            for dim in self.shape:
-                size *= dim
-            self._size = size
+            self._size = math.prod(self.shape)
         return self._size
 
     @property

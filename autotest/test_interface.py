@@ -7,7 +7,7 @@ import pytest
 from modflow_devtools.misc import set_dir
 
 from modflowapi import Callbacks, ModflowApi, run_simulation
-from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
+from modflowapi.extensions.pakbase import Package
 
 data_pth = Path("../docs/examples/data")
 pytestmark = pytest.mark.extensions
@@ -71,16 +71,16 @@ def test_dis_model(function_tmpdir):
                 raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            if "idomain" not in dis.variable_names:
+                raise TypeError("DIS package should have grid array variables")
 
             wel = model.wel
-            if not isinstance(wel, ListPackage):
-                raise TypeError("WEL package has incorrect base class type")
+            if wel.stress_period_data is None:
+                raise TypeError("WEL package should have stress period data")
 
             gnc = model.gnc
-            if not isinstance(gnc, AdvancedPackage):
-                raise TypeError("GNC package has incorrect base class type")
+            if not isinstance(gnc, Package):
+                raise TypeError("GNC package has incorrect type")
 
             rch = model.rch
             if len(rch) != 2:
@@ -158,16 +158,16 @@ def test_disv_model(function_tmpdir):
                 raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            if "idomain" not in dis.variable_names:
+                raise TypeError("DIS package should have grid array variables")
 
             chd = model.chd_left
-            if not isinstance(chd, ListPackage):
-                raise TypeError("CHD package has incorrect base class type")
+            if chd.stress_period_data is None:
+                raise TypeError("CHD package should have stress period data")
 
             hfb = model.hfb
-            if not isinstance(hfb, AdvancedPackage):
-                raise TypeError("HFB package has incorrect base class type")
+            if not isinstance(hfb, Package):
+                raise TypeError("HFB package has incorrect type")
 
             chd = model.chd
             if len(chd) != 2:
@@ -236,16 +236,16 @@ def test_disu_model(function_tmpdir):
                 raise AssertionError("ApiModel has advanced prior to initialization callback")
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            if "idomain" not in dis.variable_names:
+                raise TypeError("DIS package should have grid array variables")
 
             rch = model.rch
-            if not isinstance(rch, ListPackage):
-                raise TypeError("RCH package has incorrect base class type")
+            if rch.stress_period_data is None:
+                raise TypeError("RCH package should have stress period data")
 
             mvr = model.mvr
-            if not isinstance(mvr, AdvancedPackage):
-                raise TypeError("MVR package has incorrect base class type")
+            if not isinstance(mvr, Package):
+                raise TypeError("MVR package has incorrect type")
 
             top = dis.top.values
             if not isinstance(top, np.ndarray):
