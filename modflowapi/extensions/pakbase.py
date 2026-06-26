@@ -263,6 +263,8 @@ class Package:
 
     def set_advanced_var(self, name, values):
         """Set a variable not surfaced through stress_period_data or variable_names."""
+        if isinstance(values, ArrayVar):
+            values = np.asarray(values)
         if not self._sim_package:
             if values.size == self.model.size:
                 values = values[self.model.nodetouser]

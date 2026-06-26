@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import xmipy.errors
+from numpy.lib.mixins import NDArrayOperatorsMixin
 
 
 class InputVar(ABC):
@@ -21,7 +22,7 @@ class InputVar(ABC):
     def values(self, value): ...
 
 
-class ArrayVar(InputVar):
+class ArrayVar(InputVar, NDArrayOperatorsMixin):
     """
     A single grid-shaped array variable from the MODFLOW 6 memory manager.
 
@@ -67,6 +68,25 @@ class ArrayVar(InputVar):
         array[key] = value
         self.values = array
 
+    def __array__(self, dtype=None, **kwargs):
+        v = self.values
+        return np.asarray(v, dtype=dtype)
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        inputs = tuple(np.asarray(x) if isinstance(x, ArrayVar) else x for x in inputs)
+        out = kwargs.pop("out", None)
+        result = getattr(ufunc, method)(*inputs, **kwargs)
+        if out is not None and any(x is self for x in out):
+            self.values = result
+            return self
+        return result
+
+    def __len__(self):
+        return len(self.values)
+
+    def __repr__(self):
+        return repr(self.values)
+
     @property
     def values(self):
         if not self.parent._sim_package:
@@ -85,6 +105,8 @@ class ArrayVar(InputVar):
 
     @values.setter
     def values(self, array):
+        if isinstance(array, ArrayVar):
+            array = np.copy(array._ptr.ravel())
         if not isinstance(array, np.ndarray):
             raise TypeError()
         if not self.parent._sim_package:
