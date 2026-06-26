@@ -28,12 +28,10 @@ class Package:
         self.pkg_type = pkg_type
         self.pkg_name = pkg_name.upper()
         self._sim_package = sim_package
-        self._rhs = None
-        self._hcof = None
         self._bound_vars = []
         self._advanced_var_names = None
         self._idm_enabled = False
-        self._inputs = {}
+        self._vars = {}
 
         self._variables_adv = None
         self._build_inputs()
@@ -67,7 +65,7 @@ class Package:
                 self._idm_enabled = True
                 var_addrs.append(addr_chk)
 
-        self._inputs["stress_period_data"] = ListVar(self, var_addrs, spd=True)
+        self._vars["stress_period_data"] = ListVar(self, var_addrs, spd=True)
 
     def _build_plain_inputs(self, vars_list):
         ivn = self.model.mf6.get_input_var_names()
@@ -80,18 +78,18 @@ class Package:
                 continue
             name = var.lower()
             if self._sim_package:
-                self._inputs[name] = ScalarVar(name, self.model.mf6.get_value_ptr(addr))
+                self._vars[name] = ScalarVar(name, self.model.mf6.get_value_ptr(addr))
             else:
                 arr_var = ArrayVar(self, addr)
                 if arr_var.name is not None:
-                    self._inputs[name] = arr_var
+                    self._vars[name] = arr_var
 
     def _build_advanced_inputs(self):
         adv_var_dict = adv_pkgvars[self.pkg_type]
 
         pkg_var_addrs = self._collect_adv_var_addrs(adv_var_dict, "packagedata")
         if pkg_var_addrs:
-            self._inputs["packagedata"] = ListVar(self, pkg_var_addrs, spd=False)
+            self._vars["packagedata"] = ListVar(self, pkg_var_addrs, spd=False)
 
         sp_var_addrs = []
         if "perioddata" in adv_var_dict:
@@ -113,14 +111,14 @@ class Package:
                     sp_var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
 
         if sp_var_addrs:
-            self._inputs["stress_period_data"] = ListVar(self, sp_var_addrs, spd=True)
+            self._vars["stress_period_data"] = ListVar(self, sp_var_addrs, spd=True)
 
         for block in adv_var_dict:
             if block in _ADV_BLOCK_NAMES:
                 continue
             var_addrs = self._collect_adv_var_addrs(adv_var_dict, block)
             if var_addrs:
-                self._inputs[block] = ListVar(self, var_addrs, spd=False, name=block)
+                self._vars[block] = ListVar(self, var_addrs, spd=False, name=block)
 
     def _collect_adv_var_addrs(self, adv_var_dict, block):
         var_addrs = []
@@ -149,14 +147,26 @@ class Package:
                 s += f"  {name}\n"
         return s
 
+    def _try_discover_var(self, name):
+        """Try to build an ArrayVar for a package-scoped variable by name, return None if unavailable."""
+        if self._sim_package:
+            return None
+        var_addr = self.model.mf6.get_var_address(name.upper(), self.model.name, self.pkg_name)
+        arr_var = ArrayVar(self, var_addr)
+        return arr_var if arr_var.name is not None else None
+
     def __getattr__(self, item):
         try:
-            inputs = object.__getattribute__(self, "_inputs")
+            vars_ = object.__getattribute__(self, "_vars")
         except AttributeError:
             raise AttributeError(item)
-        if item in inputs:
-            v = inputs[item]
+        if item in vars_:
+            v = vars_[item]
             return v.values if isinstance(v, ScalarVar) else v
+        var = self._try_discover_var(item)
+        if var is not None:
+            vars_[item] = var
+            return var.values if isinstance(var, ScalarVar) else var
         raise AttributeError(item)
 
     def __setattr__(self, item, value):
@@ -169,12 +179,17 @@ class Package:
                 desc.__set__(self, value)
                 return
         try:
-            inputs = object.__getattribute__(self, "_inputs")
+            vars_ = object.__getattribute__(self, "_vars")
         except AttributeError:
             object.__setattr__(self, item, value)
             return
-        if item in inputs:
-            inputs[item].values = value
+        if item in vars_:
+            vars_[item].values = value
+            return
+        var = self._try_discover_var(item)
+        if var is not None:
+            vars_[item] = var
+            vars_[item].values = value
             return
         raise AttributeError(f"{item} is not a valid attribute for {self.pkg_type}")
 
@@ -185,11 +200,11 @@ class Package:
     @property
     def variable_names(self):
         """Returns a sorted list of non-list variable names accessible through the API."""
-        return sorted(n for n, v in self._inputs.items() if not isinstance(v, ListVar))
+        return sorted(n for n, v in self._vars.items() if not isinstance(v, ListVar))
 
     @property
     def _spd_var(self):
-        return next((v for v in self._inputs.values() if isinstance(v, ListVar) and v._spd), None)
+        return next((v for v in self._vars.values() if isinstance(v, ListVar) and v._spd), None)
 
     @property
     def nbound(self):
@@ -202,44 +217,6 @@ class Package:
         """Returns the maximum number of boundaries."""
         lv = self._spd_var
         return lv._maxbound[0] if lv is not None else None
-
-    @property
-    def rhs(self):
-        if not self._sim_package:
-            if self._rhs is None:
-                var_addr = self.model.mf6.get_var_address("RHS", self.model.name, self.pkg_name)
-                if var_addr in self.model.mf6.get_input_var_names():
-                    self._rhs = self.model.mf6.get_value_ptr(var_addr)
-                else:
-                    return None
-        return np.copy(self._rhs)
-
-    @rhs.setter
-    def rhs(self, values):
-        if self._rhs is None:
-            rhs = self.rhs
-            if rhs is None:
-                raise Exception(f"{self.pkg_type} does not have a rhs array")
-        self._rhs[:] = values[:]
-
-    @property
-    def hcof(self):
-        if not self._sim_package:
-            if self._hcof is None:
-                var_addr = self.model.mf6.get_var_address("HCOF", self.model.name, self.pkg_name)
-                if var_addr in self.model.mf6.get_input_var_names():
-                    self._hcof = self.model.mf6.get_value_ptr(var_addr)
-                else:
-                    return None
-        return np.copy(self._hcof)
-
-    @hcof.setter
-    def hcof(self, values):
-        if self._hcof is None:
-            hcof = self.hcof
-            if hcof is None:
-                raise Exception(f"{self.pkg_type} does not have an hcof array")
-        self._hcof[:] = values[:]
 
     @property
     def advanced_vars(self):
@@ -299,28 +276,28 @@ class Package:
 
     def get_array(self, item):
         """Get a grid-shaped array variable by name."""
-        v = self._inputs.get(item)
+        v = self._vars.get(item)
         if v is None or not isinstance(v, ArrayVar):
             raise KeyError(f"{item} is not accessible in this package")
         return v.values
 
     def set_array(self, item, array):
         """Set a grid-shaped array variable by name."""
-        v = self._inputs.get(item)
+        v = self._vars.get(item)
         if v is None or not isinstance(v, ArrayVar):
             raise KeyError(f"{item} is not a valid variable name for this package")
         v.values = array
 
     def get_value(self, item):
         """Get a scalar variable by name."""
-        v = self._inputs.get(item)
+        v = self._vars.get(item)
         if v is None or not isinstance(v, ScalarVar):
             raise KeyError(f"{item} is not accessible in this package")
         return v.values
 
     def set_value(self, item, value):
         """Set a scalar variable by name."""
-        v = self._inputs.get(item)
+        v = self._vars.get(item)
         if v is None or not isinstance(v, ScalarVar):
             raise KeyError(f"{item} is not accessible in this package")
         v.values = value
@@ -378,9 +355,9 @@ class ApiSlnPackage(Package):
         if pkg_type == "ims":
             mdl = ApiMbase(sim.mf6, pkg_name.upper(), pkg_types={pkg_type: Package})
             imslin = Package(mdl, "ims", "IMSLINEAR", sim_package=True)
-            for key, var in imslin._inputs.items():
-                if key in self._inputs:
+            for key, var in imslin._vars.items():
+                if key in self._vars:
                     key = f"{imslin.pkg_type}_{key}"
-                self._inputs[key] = var
+                self._vars[key] = var
         else:
             object.__setattr__(self, "mxiter", 10)
