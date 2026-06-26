@@ -73,8 +73,12 @@ class ArrayVar(InputVar):
             value = np.ones((self.parent.model.size,)) * np.nan
             if self._ptr.size == self.parent.model.size:
                 value[:] = self._ptr.ravel()
-            else:
+            elif self._ptr.size == self.parent.model.nodetouser.size:
+                # Variable lives on the reduced (active-node) grid
                 value[self.parent.model.nodetouser] = self._ptr.ravel()
+            else:
+                # Non-grid variable (e.g. per-boundary rhs/hcof); return raw copy
+                return np.copy(self._ptr.ravel())
             return value.reshape(self.parent.model.shape)
         else:
             return np.copy(self._ptr.ravel())
@@ -84,15 +88,21 @@ class ArrayVar(InputVar):
         if not isinstance(array, np.ndarray):
             raise TypeError()
         if not self.parent._sim_package:
-            if array.size != self.parent.model.size:
+            if array.size == self.parent.model.size:
+                array = array.ravel()
+                if self._ptr.size != array.size:
+                    array = array[self.parent.model.nodetouser]
+                if len(self._vshape) > 1:
+                    array.shape = self._vshape
+            elif array.size == self._ptr.size:
+                # Non-grid variable (e.g. per-boundary rhs/hcof); assign directly
+                array = array.ravel()
+                if len(self._vshape) > 1:
+                    array.shape = self._vshape
+            else:
                 raise ValueError(
                     f"{self.name} size {array.size} is not equal to modflow variable size {self.parent.model.size}"
                 )
-            array = array.ravel()
-            if self._ptr.size != array.size:
-                array = array[self.parent.model.nodetouser]
-            if len(self._vshape) > 1:
-                array.shape = self._vshape
         else:
             array = array.ravel()
         self._ptr[:] = array
