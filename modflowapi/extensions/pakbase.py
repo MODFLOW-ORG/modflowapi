@@ -163,6 +163,11 @@ class Package:
         if item.startswith("_") or item in _BASE_ATTRS:
             object.__setattr__(self, item, value)
             return
+        for cls in type(self).__mro__:
+            desc = cls.__dict__.get(item)
+            if desc is not None and hasattr(desc, "__set__"):
+                desc.__set__(self, value)
+                return
         try:
             inputs = object.__getattribute__(self, "_inputs")
         except AttributeError:
