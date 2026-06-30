@@ -1,5 +1,8 @@
 from .pakbase import AdvancedPackage
 
-# Backward compatibility alias; SFR diversions are now handled generically
-# by Package._build_advanced_inputs via adv_pkgvars["sfr"]["diversions"].
+# Backward compatibility aliases
 SfrPackage = AdvancedPackage
+SfrPakage = AdvancedPackage  # preserved old typo spelling
+LakPackage = AdvancedPackage
+MawPackage = AdvancedPackage
+UzfPackage = AdvancedPackage

@@ -7,6 +7,11 @@ _BASE_ATTRS = frozenset({"model", "pkg_name", "pkg_type"})
 _ADV_BLOCK_NAMES = frozenset({"packagedata", "perioddata"})
 
 
+def _unwrap_list_input(value):
+    """Return value.values if value is a ListInput, otherwise return value as-is."""
+    return value.values if isinstance(value, ListInput) else value
+
+
 class Package:
     """
     Package object for MODFLOW 6 API packages.
@@ -120,7 +125,7 @@ class Package:
                 continue
             var_addrs = self._collect_adv_var_addrs(adv_var_dict, block)
             if var_addrs:
-                self._list_vars[block] = ListInput(self, var_addrs, spd=False, name=block)
+                self._list_vars[block] = ListInput(self, var_addrs, spd=False)
 
     def _collect_adv_var_addrs(self, adv_var_dict, block):
         var_addrs = []
@@ -200,7 +205,7 @@ class Package:
             pass
         else:
             if item in list_vars:
-                list_vars[item].values = value
+                list_vars[item].values = _unwrap_list_input(value)
                 return
         var = self._try_discover_var(item)
         if var is not None:
@@ -227,7 +232,7 @@ class Package:
     def stress_period_data(self, recarray):
         lv = self._list_vars.get("stress_period_data")
         if lv is not None:
-            lv.values = recarray
+            lv.values = _unwrap_list_input(recarray)
 
     @property
     def packagedata(self):
@@ -238,7 +243,7 @@ class Package:
     def packagedata(self, recarray):
         lv = self._list_vars.get("packagedata")
         if lv is not None:
-            lv.values = recarray
+            lv.values = _unwrap_list_input(recarray)
 
     @property
     def nbound(self):
