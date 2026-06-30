@@ -888,3 +888,32 @@ class ScalarInput:
             self._ptrs[item][0] = value
         else:
             raise KeyError(f"{item} is not accessible in this package")
+
+
+class ScalarVar:
+    """
+    A single scalar variable from the MODFLOW 6 memory manager.
+
+    Parameters
+    ----------
+    name : str
+        variable name
+    ptr : np.ndarray
+        1-element pointer array from the MODFLOW 6 memory manager
+    """
+
+    def __init__(self, name: str, ptr):
+        self._name = name
+        self._ptr = ptr
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def values(self):
+        return self._ptr[0]
+
+    @values.setter
+    def values(self, v):
+        self._ptr[0] = v
