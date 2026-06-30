@@ -1,6 +1,6 @@
 import numpy as np
 
-from .data import AdvancedInput, ArrayVar, ListVar, ScalarVar
+from .data import AdvancedInput, ArrayPointer, ListInput, ScalarVar
 from .datamodel import adv_pkgvars, pkgvars
 
 _BASE_ATTRS = frozenset({"model", "pkg_name", "pkg_type"})
@@ -31,8 +31,10 @@ class Package:
         self._bound_vars = []
         self._advanced_var_names = None
         self._idm_enabled = False
+        self._rhs = None
+        self._hcof = None
         self._vars = {}
-
+        self._list_vars = {}
         self._variables_adv = None
         self._build_inputs()
 
@@ -65,7 +67,7 @@ class Package:
                 self._idm_enabled = True
                 var_addrs.append(addr_chk)
 
-        self._vars["stress_period_data"] = ListVar(self, var_addrs, spd=True)
+        self._list_vars["stress_period_data"] = ListInput(self, var_addrs, spd=True)
 
     def _build_plain_inputs(self, vars_list):
         ivn = self.model.mf6.get_input_var_names()
@@ -80,7 +82,7 @@ class Package:
             if self._sim_package:
                 self._vars[name] = ScalarVar(name, self.model.mf6.get_value_ptr(addr))
             else:
-                arr_var = ArrayVar(self, addr)
+                arr_var = ArrayPointer(self, addr)
                 if arr_var.name is not None:
                     self._vars[name] = arr_var
 
@@ -89,7 +91,7 @@ class Package:
 
         pkg_var_addrs = self._collect_adv_var_addrs(adv_var_dict, "packagedata")
         if pkg_var_addrs:
-            self._vars["packagedata"] = ListVar(self, pkg_var_addrs, spd=False)
+            self._list_vars["packagedata"] = ListInput(self, pkg_var_addrs, spd=False)
 
         sp_var_addrs = []
         if "perioddata" in adv_var_dict:
@@ -111,14 +113,14 @@ class Package:
                     sp_var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
 
         if sp_var_addrs:
-            self._vars["stress_period_data"] = ListVar(self, sp_var_addrs, spd=True)
+            self._list_vars["stress_period_data"] = ListInput(self, sp_var_addrs, spd=True)
 
         for block in adv_var_dict:
             if block in _ADV_BLOCK_NAMES:
                 continue
             var_addrs = self._collect_adv_var_addrs(adv_var_dict, block)
             if var_addrs:
-                self._vars[block] = ListVar(self, var_addrs, spd=False, name=block)
+                self._list_vars[block] = ListInput(self, var_addrs, spd=False, name=block)
 
     def _collect_adv_var_addrs(self, adv_var_dict, block):
         var_addrs = []
@@ -148,11 +150,11 @@ class Package:
         return s
 
     def _try_discover_var(self, name):
-        """Try to build an ArrayVar for a package-scoped variable by name, return None if unavailable."""
+        """Try to build an ArrayPointer for a package-scoped variable by name, return None if unavailable."""
         if self._sim_package:
             return None
         var_addr = self.model.mf6.get_var_address(name.upper(), self.model.name, self.pkg_name)
-        arr_var = ArrayVar(self, var_addr)
+        arr_var = ArrayPointer(self, var_addr)
         return arr_var if arr_var.name is not None else None
 
     def __getattr__(self, item):
@@ -163,10 +165,16 @@ class Package:
         if item in vars_:
             v = vars_[item]
             return v.values if isinstance(v, ScalarVar) else v
+        try:
+            list_vars = object.__getattribute__(self, "_list_vars")
+        except AttributeError:
+            raise AttributeError(item)
+        if item in list_vars:
+            return list_vars[item]
         var = self._try_discover_var(item)
         if var is not None:
             vars_[item] = var
-            return var.values if isinstance(var, ScalarVar) else var
+            return var
         raise AttributeError(item)
 
     def __setattr__(self, item, value):
@@ -186,6 +194,14 @@ class Package:
         if item in vars_:
             vars_[item].values = value
             return
+        try:
+            list_vars = object.__getattribute__(self, "_list_vars")
+        except AttributeError:
+            pass
+        else:
+            if item in list_vars:
+                list_vars[item].values = value
+                return
         var = self._try_discover_var(item)
         if var is not None:
             vars_[item] = var
@@ -199,24 +215,82 @@ class Package:
 
     @property
     def variable_names(self):
-        """Returns a sorted list of non-list variable names accessible through the API."""
-        return sorted(n for n, v in self._vars.items() if not isinstance(v, ListVar))
+        """Returns a sorted list of array/scalar variable names accessible through the API."""
+        return sorted(self._vars)
 
     @property
-    def _spd_var(self):
-        return next((v for v in self._vars.values() if isinstance(v, ListVar) and v._spd), None)
+    def stress_period_data(self):
+        """Returns the ListInput for stress period data, or None if not present."""
+        return self._list_vars.get("stress_period_data")
+
+    @stress_period_data.setter
+    def stress_period_data(self, recarray):
+        lv = self._list_vars.get("stress_period_data")
+        if lv is not None:
+            lv.values = recarray
+
+    @property
+    def packagedata(self):
+        """Returns the ListInput for packagedata, or None if not present."""
+        return self._list_vars.get("packagedata")
+
+    @packagedata.setter
+    def packagedata(self, recarray):
+        lv = self._list_vars.get("packagedata")
+        if lv is not None:
+            lv.values = recarray
 
     @property
     def nbound(self):
         """Returns the number of active boundaries for the current stress period."""
-        lv = self._spd_var
+        lv = self._list_vars.get("stress_period_data")
         return lv._nbound[0] if lv is not None else None
 
     @property
     def maxbound(self):
         """Returns the maximum number of boundaries."""
-        lv = self._spd_var
+        lv = self._list_vars.get("stress_period_data")
         return lv._maxbound[0] if lv is not None else None
+
+    @property
+    def rhs(self):
+        if self._sim_package:
+            return None
+        if self._rhs is None:
+            var_addr = self.model.mf6.get_var_address("RHS", self.model.name, self.pkg_name)
+            if var_addr in self.model.mf6.get_input_var_names():
+                self._rhs = self.model.mf6.get_value_ptr(var_addr)
+            else:
+                return None
+        return np.copy(self._rhs)
+
+    @rhs.setter
+    def rhs(self, values):
+        if self._rhs is None:
+            _ = self.rhs
+            if self._rhs is None:
+                raise Exception(f"{self.pkg_type} does not have a rhs array")
+        self._rhs[:] = values[:]
+
+    @property
+    def hcof(self):
+        if self._sim_package:
+            return None
+        if self._hcof is None:
+            var_addr = self.model.mf6.get_var_address("HCOF", self.model.name, self.pkg_name)
+            if var_addr in self.model.mf6.get_input_var_names():
+                self._hcof = self.model.mf6.get_value_ptr(var_addr)
+            else:
+                return None
+        return np.copy(self._hcof)
+
+    @hcof.setter
+    def hcof(self, values):
+        if self._hcof is None:
+            _ = self.hcof
+            if self._hcof is None:
+                raise Exception(f"{self.pkg_type} does not have an hcof array")
+        self._hcof[:] = values[:]
 
     @property
     def advanced_vars(self):
@@ -263,8 +337,8 @@ class Package:
 
     def set_advanced_var(self, name, values):
         """Set a variable not surfaced through stress_period_data or variable_names."""
-        if isinstance(values, ArrayVar):
-            values = np.asarray(values)
+        if isinstance(values, ArrayPointer):
+            values = np.asarray(values.values)
         if not self._sim_package:
             if values.size == self.model.size:
                 values = values[self.model.nodetouser]
@@ -279,14 +353,14 @@ class Package:
     def get_array(self, item):
         """Get a grid-shaped array variable by name."""
         v = self._vars.get(item)
-        if v is None or not isinstance(v, ArrayVar):
+        if v is None or not isinstance(v, ArrayPointer):
             raise KeyError(f"{item} is not accessible in this package")
         return v.values
 
     def set_array(self, item, array):
         """Set a grid-shaped array variable by name."""
         v = self._vars.get(item)
-        if v is None or not isinstance(v, ArrayVar):
+        if v is None or not isinstance(v, ArrayPointer):
             raise KeyError(f"{item} is not a valid variable name for this package")
         v.values = array
 
