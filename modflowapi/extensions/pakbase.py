@@ -4,7 +4,7 @@ from .data import AdvancedInput, ArrayPointer, ListInput, ScalarVar
 from .datamodel import adv_pkgvars, pkgvars
 
 _BASE_ATTRS = frozenset({"model", "pkg_name", "pkg_type"})
-_ADV_BLOCK_NAMES = frozenset({"packagedata", "perioddata"})
+_ADV_BLOCK_NAMES = frozenset({"griddata", "packagedata", "perioddata"})
 
 
 def _unwrap_list_input(value):
@@ -50,10 +50,12 @@ class Package:
     def _build_inputs(self):
         if self.pkg_type in adv_pkgvars:
             self._build_advanced_inputs()
-        elif self.pkg_type in pkgvars and any(isinstance(v, tuple) for v in pkgvars[self.pkg_type]):
-            self._build_list_inputs(pkgvars[self.pkg_type])
-        elif self.pkg_type in pkgvars:
-            self._build_plain_inputs(pkgvars[self.pkg_type])
+        if self.pkg_type in pkgvars:
+            vars_list = pkgvars[self.pkg_type]
+            if any(isinstance(v, tuple) for v in vars_list):
+                self._build_list_inputs(vars_list)
+            else:
+                self._build_plain_inputs(vars_list)
 
     def _build_list_inputs(self, vars_list):
         var_addrs = []
@@ -93,6 +95,9 @@ class Package:
 
     def _build_advanced_inputs(self):
         adv_var_dict = adv_pkgvars[self.pkg_type]
+
+        if "griddata" in adv_var_dict:
+            self._build_plain_inputs(adv_var_dict["griddata"])
 
         pkg_var_addrs = self._collect_adv_var_addrs(adv_var_dict, "packagedata")
         if pkg_var_addrs:
@@ -220,8 +225,8 @@ class Package:
 
     @property
     def variable_names(self):
-        """Returns a sorted list of array/scalar variable names accessible through the API."""
-        return sorted(self._vars)
+        """Returns a sorted list of variable names accessible through the API."""
+        return sorted(list(self._vars) + list(self._list_vars))
 
     @property
     def stress_period_data(self):

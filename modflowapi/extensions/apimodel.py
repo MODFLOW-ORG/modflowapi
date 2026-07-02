@@ -20,6 +20,8 @@ class ApiMbase:
         optional dictionary of package types and ApiPackage class types
     """
 
+    sim_level = False  # True for sim/exchange containers; False for model containers
+
     def __init__(self, mf6, name, pkg_types=None):
         self.mf6 = mf6
         self.name = name
@@ -77,9 +79,7 @@ class ApiMbase:
             else:
                 pkg_cls = Package
 
-            adj_pkg_name = "" if "-" in pkg_type else pkg_name
-
-            package = pkg_cls(self, pkg_type, adj_pkg_name)
+            package = pkg_cls(self, pkg_type, pkg_name, sim_package=self.sim_level)
             self.package_dict[pkg_name.lower()] = package
 
     def get_package(self, pkg_name) -> "Package":

@@ -494,7 +494,6 @@ class ArrayPointer:
                 raise ValueError(
                     f"{self.name} size {array.size} is not equal to modflow variable size {self.parent.model.size}"
                 )
-
             array = array.ravel()
             if self._ptr.size != array.size:
                 array = array[self.parent.model.nodetouser]
