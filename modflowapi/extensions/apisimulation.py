@@ -36,9 +36,6 @@ class ApiSimulation:
 
         self.tdis = tdis
         self.ats = ats
-        self._ats_active = True
-        if ats is None:
-            self._ats_active = False
 
     def __getattr__(self, item):
         """
@@ -72,7 +69,7 @@ class ApiSimulation:
         Returns a boolean to indicate if the ATS package is used in this
         simulation.
         """
-        return self._ats_active
+        return self.ats is not None
 
     @property
     def ats_period(self):
@@ -134,9 +131,7 @@ class ApiSimulation:
         """
         if len(self._solutions) > 1:
             return list(self._solutions.values())
-        else:
-            for sln in self._solutions.values():
-                return sln
+        return next(iter(self._solutions.values()))
 
     @property
     def model_names(self):
@@ -158,7 +153,7 @@ class ApiSimulation:
         """
         Returns a list of ApiModel objects associated with the simulation
         """
-        return [v for _, v in self._models.items()]
+        return list(self._models.values())
 
     @property
     def iteration(self):
@@ -283,25 +278,7 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.startswith("SLN"):
                     continue
-                elif (
-                    name.startswith("GWFIM")
-                    or name.startswith("GWTIM")
-                    or name.startswith("GWEIM")
-                    or name.startswith("PRTIM")
-                    or name.startswith("CHFIM")
-                    or name.startswith("OLFIM")
-                    or name.startswith("SWFIM")
-                ):
-                    continue
-                elif (
-                    name.startswith("GWFCON")
-                    or name.startswith("GWTCON")
-                    or name.startswith("GWECON")
-                    or name.startswith("PRTCON")
-                    or name.startswith("CHFCON")
-                    or name.startswith("OLFCON")
-                    or name.startswith("SWFCON")
-                ):
+                elif name[3:5] in ("IM", "CO"):
                     continue
                 if id_var_addr not in variables:
                     continue
@@ -321,22 +298,14 @@ class ApiSimulation:
                 id_var_addr = mf6.get_var_address("ID", name)
                 if name.lower() in models or name == "TDIS":
                     continue
-                if (
-                    name.startswith("GWFIM")
-                    or name.startswith("GWTIM")
-                    or name.startswith("GWEIM")
-                    or name.startswith("PRTIM")
-                    or name.startswith("CHFIM")
-                    or name.startswith("OLFIM")
-                    or name.startswith("SWFIM")
-                ):
+                if name[3:5] == "IM":
                     continue
                 if id_var_addr not in variables:
                     continue
 
                 solution_names.append(t[0])
 
-        idp_names = [i for i in mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES")]
+        idp_names = list(mf6.get_value("__INPUT__/SIM/NAM/SLNMNAMES"))
         solution_types = [
             i[:-1].lower() for ix, i in enumerate(mf6.get_value("__INPUT__/SIM/NAM/SLNTYPE")) if idp_names[ix]
         ]
@@ -373,10 +342,8 @@ class ApiSimulation:
             if is_exg(name) and exchange_name not in exchange_names:
                 exchange_names.append(exchange_name)
 
-        # sim_packages: tdis, gwf-gwf, sln
         exchanges = {}
         for exchange_name in exchange_names:
-            exchange = ApiExchange(mf6, exchange_name)
-            exchanges[exchange_name.lower()] = exchange
+            exchanges[exchange_name.lower()] = ApiExchange(mf6, exchange_name)
 
         return ApiSimulation(mf6, models, solutions, exchanges, tdis, ats)
