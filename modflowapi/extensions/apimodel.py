@@ -15,16 +15,13 @@ class ApiMbase:
         initialized ModflowApi object
     name : str
         modflow model name. ex. "GWF_1", "GWF-GWF_1"
-    pkg_types : None, dict
-        optional dictionary of package types and ApiPackage class types
     """
 
-    def __init__(self, mf6, name, pkg_types=None):
+    def __init__(self, mf6, name):
         self.mf6 = mf6
         self.name = name
         self._pkg_names = None
         self._pak_type = None
-        self._pkg_types = pkg_types
         self.package_dict = {}
         self._set_package_names()
         self._create_package_list()
@@ -57,9 +54,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                name = tmp[0].rsplit("_", 1)[0]
-                if is_exg(name):
-                    pak_types[tmp[0]] = name
+                pkg_type = tmp[0].rsplit("_", 1)[0]
+                if is_exg(pkg_type):
+                    pak_types[tmp[0]] = pkg_type
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
@@ -71,17 +68,13 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if self._pkg_types is None:
-                basepackage = get_package_type(pkg_type)
+            if is_exg(pkg_type):
+                basepackage = ListPackage
             else:
-                if pkg_type in self._pkg_types:
-                    basepackage = self._pkg_types[pkg_type]
-                else:
-                    basepackage = AdvancedPackage
+                basepackage = get_package_type(pkg_type)
 
             package = package_factory(pkg_type, basepackage)
-            parts = pkg_type.split("-")
-            if len(parts) == 2 and parts[0] == parts[1]:
+            if is_exg(pkg_type):
                 adj_pkg_name = ""
             else:
                 adj_pkg_name = pkg_name

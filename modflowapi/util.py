@@ -22,6 +22,6 @@ def amend_libmf6_path(path: str | PathLike) -> str:
     return path
 
 
-def is_exg(name: str):
-    parts = name.split("-")
+def is_exg(pkg_type: str):
+    parts = pkg_type.split("-")
     return len(parts) == 2 and parts[0] == parts[1]
