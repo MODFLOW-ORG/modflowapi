@@ -61,7 +61,7 @@ class ApiSimulation:
         if self._exchanges:
             s += "\tExchanges include:\n"
             for name, exchange in self._exchanges.items():
-                f"\t\t{name}: {type(exchange)}\n"
+                s += f"\t\t{name}: {type(exchange)}\n"
 
         return s
 
@@ -256,8 +256,7 @@ class ApiSimulation:
             raise AssertionError("No exchanges are present in this simulation")
 
         if exchange_name is None:
-            for _, exg in self._exchanges:
-                return exg
+            return next(iter(self._exchanges.values()))
 
         else:
             if exchange_name in self._exchanges:
@@ -375,7 +374,7 @@ class ApiSimulation:
 
         # sim_packages: tdis, gwf-gwf, sln
         exchanges = {}
-        for exchange_name in exchanges:
+        for exchange_name in exchange_names:
             exchange = ApiExchange(mf6, exchange_name)
             exchanges[exchange_name.lower()] = exchange
 

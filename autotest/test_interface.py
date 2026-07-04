@@ -7,6 +7,7 @@ import pytest
 from modflow_devtools.misc import set_dir
 
 from modflowapi import Callbacks, ModflowApi, run_simulation
+from modflowapi.extensions.apiexchange import ApiExchange
 from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
 
 data_pth = Path("../docs/examples/data")
@@ -292,6 +293,20 @@ def test_two_models(function_tmpdir):
         if step == Callbacks.initialize:
             if len(sim.models) != 2:
                 raise AssertionError("Invalid number of models")
+
+            assert sim.exchange_names == ["gwf-gwf_1"]
+
+            exchange = sim.get_exchange()
+            assert isinstance(exchange, ApiExchange)
+
+            named_exchange = sim.get_exchange("gwf-gwf_1")
+            assert named_exchange is exchange
+
+            with pytest.raises(KeyError):
+                sim.get_exchange("not_a_real_exchange")
+
+            assert "Exchanges include" in repr(sim)
+            assert "gwf-gwf_1" in repr(sim)
 
     name = "two_models"
     sim_pth = data_pth / name
