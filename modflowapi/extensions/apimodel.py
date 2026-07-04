@@ -15,13 +15,17 @@ class ApiMbase:
         initialized ModflowApi object
     name : str
         modflow model name. ex. "GWF_1", "GWF-GWF_1"
+    pkg_types : None, dict
+        optional dictionary of package types and ApiPackage class types,
+        used to override the default package class selection
     """
 
-    def __init__(self, mf6, name):
+    def __init__(self, mf6, name, pkg_types=None):
         self.mf6 = mf6
         self.name = name
         self._pkg_names = None
         self._pak_type = None
+        self._pkg_types = pkg_types
         self.package_dict = {}
         self._set_package_names()
         self._create_package_list()
@@ -68,7 +72,9 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if is_exg(pkg_type):
+            if self._pkg_types is not None and pkg_type in self._pkg_types:
+                basepackage = self._pkg_types[pkg_type]
+            elif is_exg(pkg_type):
                 basepackage = ListPackage
             else:
                 basepackage = get_package_type(pkg_type)
