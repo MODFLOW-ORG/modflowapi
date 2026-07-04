@@ -279,56 +279,56 @@ class ApiSimulation:
         for variable in variables:
             t = variable.split("/")
             if len(t) == 3:
-                pkg_type = t[0]
-                id_var_addr = mf6.get_var_address("ID", pkg_type)
-                if pkg_type.startswith("SLN"):
+                name = t[0]
+                id_var_addr = mf6.get_var_address("ID", name)
+                if name.startswith("SLN"):
                     continue
                 elif (
-                    pkg_type.startswith("GWFIM")
-                    or pkg_type.startswith("GWTIM")
-                    or pkg_type.startswith("GWEIM")
-                    or pkg_type.startswith("PRTIM")
-                    or pkg_type.startswith("CHFIM")
-                    or pkg_type.startswith("OLFIM")
-                    or pkg_type.startswith("SWFIM")
+                    name.startswith("GWFIM")
+                    or name.startswith("GWTIM")
+                    or name.startswith("GWEIM")
+                    or name.startswith("PRTIM")
+                    or name.startswith("CHFIM")
+                    or name.startswith("OLFIM")
+                    or name.startswith("SWFIM")
                 ):
                     continue
                 elif (
-                    pkg_type.startswith("GWFCON")
-                    or pkg_type.startswith("GWTCON")
-                    or pkg_type.startswith("GWECON")
-                    or pkg_type.startswith("PRTCON")
-                    or pkg_type.startswith("CHFCON")
-                    or pkg_type.startswith("OLFCON")
-                    or pkg_type.startswith("SWFCON")
+                    name.startswith("GWFCON")
+                    or name.startswith("GWTCON")
+                    or name.startswith("GWECON")
+                    or name.startswith("PRTCON")
+                    or name.startswith("CHFCON")
+                    or name.startswith("OLFCON")
+                    or name.startswith("SWFCON")
                 ):
                     continue
                 if id_var_addr not in variables:
                     continue
 
-                if pkg_type not in model_names:
-                    model_names.append(pkg_type)
+                if name not in model_names:
+                    model_names.append(name)
 
         models = {}
-        for pkg_type in model_names:
-            models[pkg_type.lower()] = ApiModel(mf6, pkg_type)
+        for name in model_names:
+            models[name.lower()] = ApiModel(mf6, name)
 
         solution_names = []
         for variable in variables:
             t = variable.split("/")
             if len(t) == 2:
-                pkg_type = t[0]
-                id_var_addr = mf6.get_var_address("ID", pkg_type)
-                if pkg_type.lower() in models or pkg_type == "TDIS":
+                name = t[0]
+                id_var_addr = mf6.get_var_address("ID", name)
+                if name.lower() in models or name == "TDIS":
                     continue
                 if (
-                    pkg_type.startswith("GWFIM")
-                    or pkg_type.startswith("GWTIM")
-                    or pkg_type.startswith("GWEIM")
-                    or pkg_type.startswith("PRTIM")
-                    or pkg_type.startswith("CHFIM")
-                    or pkg_type.startswith("OLFIM")
-                    or pkg_type.startswith("SWFIM")
+                    name.startswith("GWFIM")
+                    or name.startswith("GWTIM")
+                    or name.startswith("GWEIM")
+                    or name.startswith("PRTIM")
+                    or name.startswith("CHFIM")
+                    or name.startswith("OLFIM")
+                    or name.startswith("SWFIM")
                 ):
                     continue
                 if id_var_addr not in variables:
@@ -344,11 +344,11 @@ class ApiSimulation:
         tmpmdl = ApiMbase(mf6, "")
         solution_names = list(set(solution_names))
         solution_dict = {}
-        for pkg_type in solution_names:
-            sid_var_addr = mf6.get_var_address("ID", pkg_type)
+        for name in solution_names:
+            sid_var_addr = mf6.get_var_address("ID", name)
             sid = mf6.get_value(sid_var_addr)[0]
             slntype = solution_types[sid - 1]
-            sln = ApiSlnPackage(tmpmdl, pkg_type, pkg_type=slntype)
+            sln = ApiSlnPackage(tmpmdl, name, pkg_type=slntype)
             solution_dict[sid] = sln
 
         solutions = solution_dict
@@ -369,8 +369,8 @@ class ApiSimulation:
         exchange_names = []
         for variable in variables:
             exchange_name = variable.split("/")[0]
-            pkg_type = exchange_name.rsplit("_", 1)[0]
-            if is_exg(pkg_type) and exchange_name not in exchange_names:
+            name = exchange_name.rsplit("_", 1)[0]
+            if is_exg(name) and exchange_name not in exchange_names:
                 exchange_names.append(exchange_name)
 
         # sim_packages: tdis, gwf-gwf, sln
