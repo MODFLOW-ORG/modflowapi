@@ -367,10 +367,10 @@ class ApiSimulation:
         # get the exchanges
         exchange_names = []
         for variable in variables:
-            if variable.startswith("GWF-GWF") or variable.startswith("GWT-GWT"):
-                exchange_name = variable.split("/")[0]
-                if exchange_name not in exchange_names:
-                    exchange_names.append(exchange_name)
+            exchange_name = variable.split("/")[0]
+            parts = exchange_name.rsplit("_", 1)[0].split("-")
+            if len(parts) == 2 and parts[0] == parts[1] and exchange_name not in exchange_names:
+                exchange_names.append(exchange_name)
 
         # sim_packages: tdis, gwf-gwf, sln
         exchanges = {}

@@ -56,11 +56,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                if tmp[0].startswith("GWF-GWF"):
-                    pak_types[tmp[0]] = "GWF-GWF"
-                    pak_types.pop("dis", None)
-                elif tmp[0].startswith("GWT-GWT"):
-                    pak_types[tmp[0]] = "GWT-GWT"
+                parts = tmp[0].rsplit("_", 1)[0].split("-")
+                if len(parts) == 2 and parts[0] == parts[1]:
+                    pak_types[tmp[0]] = tmp[0].rsplit("_", 1)[0]
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
@@ -81,9 +79,8 @@ class ApiMbase:
                     basepackage = AdvancedPackage
 
             package = package_factory(pkg_type, basepackage)
-            adj_pkg_name = "".join(pkg_type.split("-"))
-
-            if adj_pkg_name.lower() in ("gwfgwf", "gwtgwt"):
+            parts = pkg_type.split("-")
+            if len(parts) == 2 and parts[0] == parts[1]:
                 adj_pkg_name = ""
             else:
                 adj_pkg_name = pkg_name
