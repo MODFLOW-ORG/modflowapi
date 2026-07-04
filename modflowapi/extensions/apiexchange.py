@@ -1,11 +1,10 @@
 from .apimodel import ApiMbase
-from .pakbase import ListPackage
 
 
 class ApiExchange(ApiMbase):
     """
-    ApiExchange class for GWF-GWF packages and container to access the
-    simulation level GWF-GWF, MVR, and GNC packages
+    ApiExchange class for exchange packages (e.g. GWF-GWF, GWT-GWT) and
+    container to access simulation level exchange, MVR, and GNC packages
 
     Parameters
     ----------
@@ -16,9 +15,4 @@ class ApiExchange(ApiMbase):
     """
 
     def __init__(self, mf6, name):
-        pkg_types = {
-            "gwf-gwf": ListPackage,
-            "gwt-gwt": ListPackage,
-            "gwe-gwe": ListPackage,
-        }
-        super().__init__(mf6, name, pkg_types)
+        super().__init__(mf6, name)

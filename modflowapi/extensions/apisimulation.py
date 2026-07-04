@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..util import is_exg
 from .apiexchange import ApiExchange
 from .apimodel import ApiMbase, ApiModel
 from .pakbase import ApiSlnPackage, ListPackage, ScalarPackage, package_factory
@@ -49,7 +50,7 @@ class ApiSimulation:
             return super().__getattribute__(item)
 
     def __repr__(self):
-        s = self.__doc__
+        s = self.__doc__ or ""
         s += f"Number of models: {len(self._models)}:\n"
         for name, obj in self._models.items():
             s += f"\t{name} : {type(obj)}\n"
@@ -147,7 +148,7 @@ class ApiSimulation:
     @property
     def exchange_names(self):
         """
-        Returns a list of exchange GWF-GWF names
+        Returns a list of exchange names (e.g. "GWF-GWF_1")
         """
         if self._exchanges.keys():
             return list(self._exchanges.keys())
@@ -240,13 +241,13 @@ class ApiSimulation:
 
     def get_exchange(self, exchange_name=None):
         """
-        Get a GWF-GWF "model" and all associated simulation level package
-        data (ex. GNC, MVR)
+        Get an exchange and all associated simulation level package data
+        (ex. GNC, MVR)
 
         Parameters
         ----------
         exchange_name : str
-            name of the GWF-GWF exchange package
+            name of the exchange package (e.g. "GWF-GWF_1")
 
         Returns
         -------
@@ -367,10 +368,10 @@ class ApiSimulation:
         # get the exchanges
         exchange_names = []
         for variable in variables:
-            if variable.startswith("GWF-GWF") or variable.startswith("GWT-GWT"):
-                exchange_name = variable.split("/")[0]
-                if exchange_name not in exchange_names:
-                    exchange_names.append(exchange_name)
+            exchange_name = variable.split("/")[0]
+            name = exchange_name.rsplit("_", 1)[0]
+            if is_exg(name) and exchange_name not in exchange_names:
+                exchange_names.append(exchange_name)
 
         # sim_packages: tdis, gwf-gwf, sln
         exchanges = {}

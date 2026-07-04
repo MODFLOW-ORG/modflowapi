@@ -1,8 +1,9 @@
+from os import PathLike
 from pathlib import Path
 from platform import system
 
 
-def amend_libmf6_path(path) -> str:
+def amend_libmf6_path(path: str | PathLike) -> str:
     ext = Path(path).suffix
     path = str(path)
     os = system().lower()
@@ -19,3 +20,8 @@ def amend_libmf6_path(path) -> str:
     elif os == "darwin" and not ext:
         path += ".dylib"
     return path
+
+
+def is_exg(pkg_type: str):
+    parts = pkg_type.split("-")
+    return len(parts) == 2 and parts[0] == parts[1]

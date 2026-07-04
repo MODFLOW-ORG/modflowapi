@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..util import is_exg
 from .datamodel import get_package_type, gridshape
 from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
 
@@ -15,7 +16,8 @@ class ApiMbase:
     name : str
         modflow model name. ex. "GWF_1", "GWF-GWF_1"
     pkg_types : None, dict
-        optional dictionary of package types and ApiPackage class types
+        optional dictionary of package types and ApiPackage class types,
+        used to override the default package class selection
     """
 
     def __init__(self, mf6, name, pkg_types=None):
@@ -56,11 +58,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                if tmp[0].startswith("GWF-GWF"):
-                    pak_types[tmp[0]] = "GWF-GWF"
-                    pak_types.pop("dis", None)
-                elif tmp[0].startswith("GWT-GWT"):
-                    pak_types[tmp[0]] = "GWT-GWT"
+                pkg_type = tmp[0].rsplit("_", 1)[0]
+                if is_exg(pkg_type):
+                    pak_types[tmp[0]] = pkg_type
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
@@ -72,18 +72,15 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if self._pkg_types is None:
-                basepackage = get_package_type(pkg_type)
+            if self._pkg_types is not None and pkg_type in self._pkg_types:
+                basepackage = self._pkg_types[pkg_type]
+            elif is_exg(pkg_type):
+                basepackage = ListPackage
             else:
-                if pkg_type in self._pkg_types:
-                    basepackage = self._pkg_types[pkg_type]
-                else:
-                    basepackage = AdvancedPackage
+                basepackage = get_package_type(pkg_type)
 
             package = package_factory(pkg_type, basepackage)
-            adj_pkg_name = "".join(pkg_type.split("-"))
-
-            if adj_pkg_name.lower() in ("gwfgwf", "gwtgwt"):
+            if is_exg(pkg_type):
                 adj_pkg_name = ""
             else:
                 adj_pkg_name = pkg_name
