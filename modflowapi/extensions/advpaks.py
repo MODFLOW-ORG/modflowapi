@@ -1,107 +1,24 @@
-import numpy as np
+import warnings
 
-from .data import ListInput
 from .pakbase import AdvancedPackage
 
-
-class SfrPakage(AdvancedPackage):
-    """
-    Container for SFR and SFR like packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "SFR"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name, sim_package)
-
-        self._diversion_var_arrs = []
-        self._set_advanced_variable_addrs("diversions", "_diversion_var_addrs")
-        self._diversion_vars = ListInput(self, self._diversion_var_arrs, spd=False)
-
-    @property
-    def diversions(self):
-        return self._diversion_vars
-
-    @diversions.setter
-    def diversions(self, recarray):
-        """
-        Setter object to update the diversions data
-
-        """
-        if isinstance(recarray, np.recarray):
-            self._diversion_vars.values = recarray
-        elif isinstance(recarray, ListInput):
-            self._diversion_vars.values = recarray.values
-        elif recarray is None:
-            self._diversion_vars.values = recarray
-        else:
-            raise TypeError(f"{type(recarray)} is not a supported diversions type")
+# Backward compatibility aliases
+_DEPRECATED_NAMES = {
+    "SfrPackage": AdvancedPackage,
+    "SfrPakage": AdvancedPackage,  # preserved old typo spelling
+    "LakPackage": AdvancedPackage,
+    "MawPackage": AdvancedPackage,
+    "UzfPackage": AdvancedPackage,
+}
 
 
-class LakPackage(AdvancedPackage):
-    """
-    Container for LAK and LAK like packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "LAK"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name, sim_package)
-
-
-class MawPackage(AdvancedPackage):
-    """
-    Container for MAW and MAW like packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "MAW"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name, sim_package)
-
-
-class UzfPackage(AdvancedPackage):
-    """
-    Container for UZF and UZF like packages
-
-    Parameters
-    ----------
-    model : ApiModel
-        modflowapi model object
-    pkg_type : str
-        package type. Ex. "UZF"
-    pkg_name : str
-        package name (in the mf6 variables)
-    sim_package : bool
-        boolean flag for simulation level packages. Ex. TDIS, IMS
-    """
-
-    def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(model, pkg_type, pkg_name, sim_package)
+def __getattr__(name):
+    if name in _DEPRECATED_NAMES:
+        warnings.warn(
+            f"{name} is deprecated and will be removed in a future release; use AdvancedPackage "
+            "(or Package) from modflowapi.extensions.pakbase instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return _DEPRECATED_NAMES[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

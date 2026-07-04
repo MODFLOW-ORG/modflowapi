@@ -3,8 +3,8 @@ import math
 import numpy as np
 
 from ..util import is_exg
-from .datamodel import get_package_type, gridshape
-from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
+from .datamodel import get_package_class, gridshape
+from .pakbase import Package
 
 
 class ApiMbase:
@@ -21,6 +21,8 @@ class ApiMbase:
         optional dictionary of package types and ApiPackage class types,
         used to override the default package class selection
     """
+
+    sim_level = False
 
     def __init__(self, mf6, name, pkg_types=None):
         self.mf6 = mf6
@@ -48,7 +50,7 @@ class ApiMbase:
 
     @property
     def package_types(self):
-        return list({package.pkg_type for package in self.package_list})
+        return list({p.pkg_type for p in self.package_list})
 
     def _set_package_names(self):
         """
@@ -75,22 +77,14 @@ class ApiMbase:
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
             if self._pkg_types is not None and pkg_type in self._pkg_types:
-                basepackage = self._pkg_types[pkg_type]
-            elif is_exg(pkg_type):
-                basepackage = ListPackage
+                pkg_cls = self._pkg_types[pkg_type]
             else:
-                basepackage = get_package_type(pkg_type)
+                pkg_cls = get_package_class(pkg_type)
 
-            package = package_factory(pkg_type, basepackage)
-            if is_exg(pkg_type):
-                adj_pkg_name = ""
-            else:
-                adj_pkg_name = pkg_name
-
-            package = package(basepackage, self, pkg_type, adj_pkg_name)
+            package = pkg_cls(self, pkg_type, pkg_name, sim_package=self.sim_level)
             self.package_dict[pkg_name.lower()] = package
 
-    def get_package(self, pkg_name) -> ListPackage or ArrayPackage or AdvancedPackage:
+    def get_package(self, pkg_name) -> "Package":
         """
         Method to get a package
 
@@ -159,16 +153,9 @@ class ApiModel(ApiMbase):
         else:
             pass
 
-        s += "Packages accessible include: \n"
-        for typ, baseobj in [
-            ("ArrayPackage", ArrayPackage),
-            ("ListPackage", ListPackage),
-            ("AdvancedPackage", AdvancedPackage),
-        ]:
-            s += f"  {typ} objects:\n"
-            for name, obj in self.package_dict.items():
-                if isinstance(obj, baseobj):
-                    s += f"    {name}: {type(obj)}\n"
+        s += "Packages accessible include:\n"
+        for name, pkg in self.package_dict.items():
+            s += f"  {name}: {pkg.pkg_type.upper()}\n"
 
         return s
 

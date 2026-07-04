@@ -8,7 +8,7 @@ from modflow_devtools.misc import set_dir
 
 from modflowapi import Callbacks, ModflowApi, run_simulation
 from modflowapi.extensions.apiexchange import ApiExchange
-from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage
+from modflowapi.extensions.pakbase import AdvancedPackage, ArrayPackage, ListPackage, Package
 
 data_pth = Path("../docs/examples/data")
 pytestmark = pytest.mark.extensions
@@ -52,60 +52,45 @@ def test_dis_model(function_tmpdir):
             step is the simulation step defined by Callbacks
         """
         if step == Callbacks.initialize:
-            if len(sim.models) != 1:
-                raise AssertionError("Invalid number of models")
+            assert len(sim.models) == 1, "Invalid number of models"
 
             model = sim.test_model
-            if len(model.package_names) != 16:
-                raise AssertionError("Invalid number of packages")
-
-            if len(model.package_types) != 15:
-                raise AssertionError("Invalid number of package types")
-
-            if model.shape != (1, 10, 10):
-                raise AssertionError("ApiModel shape is incorrect")
-
-            if model.size != 100:
-                raise AssertionError("ApiModel size is incorrect")
-
-            if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError("ApiModel has advanced prior to initialization callback")
+            assert len(model.package_names) == 16, "Invalid number of packages"
+            assert len(model.package_types) == 15, "Invalid number of package types"
+            assert model.shape == (1, 10, 10), "Model grid shape is incorrect"
+            assert model.size == 100, "Model grid size is incorrect"
+            assert (model.kper, model.kstp) == (-1, -1), "Model advanced prior to initialization callback"
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            assert "idomain" in dis.variable_names
+            assert isinstance(dis, ArrayPackage)
 
             wel = model.wel
-            if not isinstance(wel, ListPackage):
-                raise TypeError("WEL package has incorrect base class type")
+            assert wel.stress_period_data
+            assert isinstance(wel, ListPackage)
 
             gnc = model.gnc
-            if not isinstance(gnc, AdvancedPackage):
-                raise TypeError("GNC package has incorrect base class type")
+            assert isinstance(gnc, Package)
+            assert isinstance(gnc, AdvancedPackage)
 
             rch = model.rch
-            if len(rch) != 2:
-                raise AssertionError("ApiModel object not returning multiple packages")
+            assert len(rch) == 2, "Model multi-packages failed"
 
             idomain = dis.idomain.values
-            if not isinstance(idomain, np.ndarray):
-                raise TypeError("Expecting a numpy array for idomain")
+            assert isinstance(idomain, np.ndarray), "Expecting a numpy array for idomain"
 
         elif step == Callbacks.stress_period_start:
-            if sim.kstp != 0:
-                raise AssertionError("Solution advanced prior to stress_period_start callback")
+            assert sim.kstp == 0, "Solution advanced prior to stress_period_start callback"
 
         elif step == Callbacks.timestep_start:
-            if sim.iteration != -1:
-                raise AssertionError("Solution advanced prior to timestep_start callback")
+            assert sim.iteration == -1, "Solution advanced prior to timestep_start callback"
 
             factor = ((1 + sim.kstp) / sim.nstp) * 0.5
             spd = sim.test_model.wel.stress_period_data.values
             sim.test_model.wel.stress_period_data["q"] *= factor
 
             spd2 = sim.test_model.wel.stress_period_data.values
-            if not np.allclose((spd["q"] * factor), spd2["q"]):
-                raise AssertionError("Pointer not being set properly")
+            assert np.allclose((spd["q"] * factor), spd2["q"]), "Pointer not being set properly"
 
             if sim.kper >= 3 and sim.kstp == 0:
                 spd = sim.test_model.wel.stress_period_data.values
@@ -113,8 +98,7 @@ def test_dis_model(function_tmpdir):
                 spd.resize((nbound0 + 1), refcheck=False)
                 spd[-1] = ((0, 1, 5), -20, 1.0, 2.0)
                 sim.test_model.wel.stress_period_data.values = spd
-                if sim.test_model.wel.nbound != nbound0 + 1:
-                    raise AssertionError("Resize routine not properly working")
+                assert sim.test_model.wel.nbound == nbound0 + 1, "Resize routine not properly working"
 
     name = "dis_model"
     sim_pth = data_pth / name
@@ -139,60 +123,45 @@ def test_disv_model(function_tmpdir):
             step is the simulation step defined by Callbacks
         """
         if step == Callbacks.initialize:
-            if len(sim.models) != 1:
-                raise AssertionError("Invalid number of models")
+            assert len(sim.models) == 1, "Invalid number of models"
 
             model = sim.gwf_1
-            if len(model.package_names) != 12:
-                raise AssertionError("Invalid number of packages")
-
-            if len(model.package_types) != 11:
-                raise AssertionError("Invalid number of package types")
-
-            if model.shape != (4, 200):
-                raise AssertionError("ApiModel shape is incorrect")
-
-            if model.size != 800:
-                raise AssertionError("ApiModel size is incorrect")
-
-            if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError("ApiModel has advanced prior to initialization callback")
+            assert len(model.package_names) == 12, "Invalid number of packages"
+            assert len(model.package_types) == 11, "Invalid number of package types"
+            assert model.shape == (4, 200), "Model grid shape is incorrect"
+            assert model.size == 800, "Model grid size is incorrect"
+            assert (model.kper, model.kstp) == (-1, -1), "Model advanced prior to initialization callback"
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            assert "idomain" in dis.variable_names
+            assert isinstance(dis, ArrayPackage)
 
             chd = model.chd_left
-            if not isinstance(chd, ListPackage):
-                raise TypeError("CHD package has incorrect base class type")
+            assert chd.stress_period_data
+            assert isinstance(chd, ListPackage)
 
             hfb = model.hfb
-            if not isinstance(hfb, AdvancedPackage):
-                raise TypeError("HFB package has incorrect base class type")
+            assert isinstance(hfb, Package)
+            assert isinstance(hfb, AdvancedPackage)
 
             chd = model.chd
-            if len(chd) != 2:
-                raise AssertionError("ApiModel object not returning multiple packages")
+            assert len(chd) == 2, "Model multi-packages failed"
 
             top = dis.top.values
-            if not isinstance(top, np.ndarray):
-                raise TypeError("Expecting a numpy array for top")
+            assert isinstance(top, np.ndarray), "Expecting a numpy array for top"
 
         elif step == Callbacks.stress_period_start:
-            if sim.kstp != 0:
-                raise AssertionError("Solution advanced prior to stress_period_start callback")
+            assert sim.kstp == 0, "Solution advanced prior to stress_period_start callback"
 
         elif step == Callbacks.timestep_start:
-            if sim.iteration != -1:
-                raise AssertionError("Solution advanced prior to timestep_start callback")
+            assert sim.iteration == -1, "Solution advanced prior to timestep_start callback"
 
             factor = 0.75
             spd = sim.gwf_1.chd_left.stress_period_data.values
             sim.gwf_1.chd_left.stress_period_data["head"] *= factor
 
             spd2 = sim.gwf_1.chd_left.stress_period_data.values
-            if not np.allclose((spd["head"] * factor), spd2["head"]):
-                raise AssertionError("Pointer not being set properly")
+            assert np.allclose((spd["head"] * factor), spd2["head"]), "Pointer not being set properly"
 
     name = "disv_model"
     sim_pth = data_pth / name
@@ -217,56 +186,42 @@ def test_disu_model(function_tmpdir):
             step is the simulation step defined by Callbacks
         """
         if step == Callbacks.initialize:
-            if len(sim.models) != 1:
-                raise AssertionError("Invalid number of models")
+            assert len(sim.models) == 1, "Invalid number of models"
 
             model = sim.gwf_1
-            if len(model.package_names) != 12:
-                raise AssertionError("Invalid number of packages")
-
-            if len(model.package_types) != 12:
-                raise AssertionError("Invalid number of package types")
-
-            if model.shape != (121,):
-                raise AssertionError("ApiModel shape is incorrect")
-
-            if model.size != 121:
-                raise AssertionError("ApiModel size is incorrect")
-
-            if (model.kper, model.kstp) != (-1, -1):
-                raise AssertionError("ApiModel has advanced prior to initialization callback")
+            assert len(model.package_names) == 12, "Invalid number of packages"
+            assert len(model.package_types) == 12, "Invalid number of package types"
+            assert model.shape == (121,), "Model grid shape is incorrect"
+            assert model.size == 121, "Model grid size is incorrect"
+            assert (model.kper, model.kstp) == (-1, -1), "Model advanced prior to initialization callback"
 
             dis = model.dis
-            if not isinstance(dis, ArrayPackage):
-                raise TypeError("DIS package has incorrect base class type")
+            assert "idomain" in dis.variable_names
+            assert isinstance(dis, ArrayPackage)
 
             rch = model.rch
-            if not isinstance(rch, ListPackage):
-                raise TypeError("RCH package has incorrect base class type")
+            assert rch.stress_period_data
+            assert isinstance(rch, ListPackage)
 
             mvr = model.mvr
-            if not isinstance(mvr, AdvancedPackage):
-                raise TypeError("MVR package has incorrect base class type")
+            assert isinstance(mvr, Package)
+            assert isinstance(mvr, AdvancedPackage)
 
             top = dis.top.values
-            if not isinstance(top, np.ndarray):
-                raise TypeError("Expecting a numpy array for top")
+            assert isinstance(top, np.ndarray), "Expecting a numpy array for top"
 
         elif step == Callbacks.stress_period_start:
-            if sim.kstp != 0:
-                raise AssertionError("Solution advanced prior to stress_period_start callback")
+            assert sim.kstp == 0, "Solution advanced prior to stress_period_start callback"
 
         elif step == Callbacks.timestep_start:
-            if sim.iteration != -1:
-                raise AssertionError("Solution advanced prior to timestep_start callback")
+            assert sim.iteration == -1, "Solution advanced prior to timestep_start callback"
 
             factor = 1.75
             spd = sim.gwf_1.rch.stress_period_data.values
             sim.gwf_1.rch.stress_period_data["recharge"] += factor
 
             spd2 = sim.gwf_1.rch.stress_period_data.values
-            if not np.allclose((spd["recharge"] + factor), spd2["recharge"]):
-                raise AssertionError("Pointer not being set properly")
+            assert np.allclose((spd["recharge"] + factor), spd2["recharge"]), "Pointer not being set properly"
 
     name = "disu_model"
     sim_pth = data_pth / name
@@ -291,8 +246,7 @@ def test_two_models(function_tmpdir):
             step is the simulation step defined by Callbacks
         """
         if step == Callbacks.initialize:
-            if len(sim.models) != 2:
-                raise AssertionError("Invalid number of models")
+            assert len(sim.models) == 2, "Invalid number of models"
 
             assert sim.exchange_names == ["gwf-gwf_1"]
 
@@ -307,6 +261,15 @@ def test_two_models(function_tmpdir):
 
             assert "Exchanges include" in repr(sim)
             assert "gwf-gwf_1" in repr(sim)
+
+            gwf_gwf = exchange.get_package(sim.exchange_names[0])
+            assert isinstance(gwf_gwf, ListPackage)
+
+            gnc = exchange.get_package("gnc")
+            assert isinstance(gnc, AdvancedPackage)
+
+            mvr = exchange.get_package("mvr")
+            assert isinstance(mvr, AdvancedPackage)
 
     name = "two_models"
     sim_pth = data_pth / name
@@ -327,8 +290,7 @@ def test_ats_model(function_tmpdir):
 
         if step == Callbacks.timestep_start:
             if sim.kstp == 1:
-                if delt0 == sim.delt:
-                    raise AssertionError("ATS routines not reducing timestep length")
+                assert delt0 != sim.delt, "ATS routines not reducing timestep length"
 
         name = "ats0"
         sim_pth = data_pth / name

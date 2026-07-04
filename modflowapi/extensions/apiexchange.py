@@ -14,5 +14,7 @@ class ApiExchange(ApiMbase):
         modflow exchange name. ex. "GWF-GWF_1"
     """
 
+    sim_level = True  # exchange packages are simulation-level, not model-level
+
     def __init__(self, mf6, name):
         super().__init__(mf6, name)

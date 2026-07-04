@@ -160,7 +160,7 @@ pkgvars = {
     "gwe-gwe": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc", "hwva"],
     # simulation
     "ats": [
-        "maxats",
+        ("maxats", ()),
         "iperats",
         "dt0",
         "dtmin",
@@ -276,11 +276,23 @@ adv_pkgvars = {
 }
 
 
-def get_package_type(pkg_type):
-    from .advpaks import LakPackage, MawPackage, SfrPakage, UzfPackage
+def get_package_class(pkg_type):
+    """
+    Return the Package subclass used to represent instances of the given
+    package type.
+
+    Package is now a single composite implementation -- the var kinds it
+    exposes (array/list/scalar/advanced) are determined by pkgvars/adv_pkgvars,
+    not by subclass. ArrayPackage/ListPackage/ScalarPackage/AdvancedPackage are
+    behaviorally identical, empty subclasses of Package kept only so that
+    isinstance(pkg, ArrayPackage) etc. still resolves as it did pre-refactor.
+    This mapping is a backwards-compatibility shim, not a real taxonomy, and
+    is slated for removal (along with the subclasses) in the next major
+    version.
+    """
     from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, ScalarPackage
 
-    pkg_types = {
+    pkg_type_classes = {
         "dis": ArrayPackage,
         "chd": ListPackage,
         "drn": ListPackage,
@@ -292,12 +304,15 @@ def get_package_type(pkg_type):
         "riv": ListPackage,
         "sto": ArrayPackage,
         "wel": ListPackage,
+        # exchanges
+        "gwf-gwf": ListPackage,
+        "gwt-gwt": ListPackage,
+        "gwe-gwe": ListPackage,
         # advanced
-        "sfr": SfrPakage,
-        "uzf": UzfPackage,
-        "lak": LakPackage,
-        "maw": MawPackage,
-        # "csub": None,
+        "sfr": AdvancedPackage,
+        "uzf": AdvancedPackage,
+        "lak": AdvancedPackage,
+        "maw": AdvancedPackage,
         # gwt
         "dsp": ArrayPackage,
         "cnc": ListPackage,
@@ -311,11 +326,8 @@ def get_package_type(pkg_type):
         "esl": ListPackage,
         # prt
         "mip": ArrayPackage,
-        # sim_level pkgs
+        # sim-level pkgs
         "tdis": ScalarPackage,
         "ats": ListPackage,
     }
-    if pkg_type in pkg_types:
-        return pkg_types[pkg_type]
-    else:
-        return AdvancedPackage
+    return pkg_type_classes.get(pkg_type, AdvancedPackage)

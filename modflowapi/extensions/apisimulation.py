@@ -3,7 +3,7 @@ import numpy as np
 from ..util import is_exg
 from .apiexchange import ApiExchange
 from .apimodel import ApiMbase, ApiModel
-from .pakbase import ApiSlnPackage, ListPackage, ScalarPackage, package_factory
+from .pakbase import ApiSlnPackage, ListPackage, ScalarPackage
 
 
 class ApiSimulation:
@@ -145,8 +145,7 @@ class ApiSimulation:
         """
         Returns a list of exchange names (e.g. "GWF-GWF_1")
         """
-        if self._exchanges.keys():
-            return list(self._exchanges.keys())
+        return list(self._exchanges.keys())
 
     @property
     def models(self):
@@ -322,24 +321,20 @@ class ApiSimulation:
 
         solutions = solution_dict
 
-        # TDIS package construction
-        tdis_constructor = package_factory("tdis", ScalarPackage)
-        tdis = tdis_constructor(ScalarPackage, tmpmdl, "tdis", "tdis", sim_package=True)
+        tdis = ScalarPackage(tmpmdl, "tdis", "tdis", sim_package=True)
 
         ats = None
-        # ATS package construction
         for variable in variables:
             if variable.startswith("ATS"):
-                ats_constructor = package_factory("ats", ListPackage)
-                ats = ats_constructor(ListPackage, tmpmdl, "ats", "ats", sim_package=True)
+                ats = ListPackage(tmpmdl, "ats", "ats", sim_package=True)
                 break
 
         # get the exchanges
         exchange_names = []
         for variable in variables:
             exchange_name = variable.split("/")[0]
-            name = exchange_name.rsplit("_", 1)[0]
-            if is_exg(name) and exchange_name not in exchange_names:
+            exg_type = exchange_name.rsplit("_", 1)[0]
+            if is_exg(exg_type) and exchange_name not in exchange_names:
                 exchange_names.append(exchange_name)
 
         exchanges = {}
