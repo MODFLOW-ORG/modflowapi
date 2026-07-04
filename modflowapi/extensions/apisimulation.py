@@ -240,7 +240,7 @@ class ApiSimulation:
 
     def get_exchange(self, exchange_name=None):
         """
-        Get a GWF-GWF "model" and all associated simulation level package
+        Get a GWF-GWF exchange and all associated simulation level package
         data (ex. GNC, MVR)
 
         Parameters
