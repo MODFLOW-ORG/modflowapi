@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from ..util import is_exg
@@ -35,7 +37,7 @@ class ApiMbase:
         """
         Returns a list of package objects for the model
         """
-        return [package for _, package in self.package_dict.items()]
+        return list(self.package_dict.values())
 
     @property
     def package_names(self):
@@ -46,7 +48,7 @@ class ApiMbase:
 
     @property
     def package_types(self):
-        return list(set([package.pkg_type for package in self.package_list]))
+        return list({package.pkg_type for package in self.package_list})
 
     def _set_package_names(self):
         """
@@ -260,8 +262,8 @@ class ApiModel(ApiMbase):
         """
         Returns a tuple of the model shape
         """
-        ivn = self.mf6.get_input_var_names()
         if self._shape is None:
+            ivn = self.mf6.get_input_var_names()
             shape_vars = gridshape[self.dis_type]
             shape = []
             for var in shape_vars:
@@ -280,10 +282,7 @@ class ApiModel(ApiMbase):
         Returns the number of nodes in the model
         """
         if self._size is None:
-            size = 1
-            for dim in self.shape:
-                size *= dim
-            self._size = size
+            self._size = math.prod(self.shape)
         return self._size
 
     @property
