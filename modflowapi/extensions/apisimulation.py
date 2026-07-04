@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..util import is_exg
 from .apiexchange import ApiExchange
 from .apimodel import ApiMbase, ApiModel
 from .pakbase import ApiSlnPackage, ListPackage, ScalarPackage, package_factory
@@ -49,7 +50,7 @@ class ApiSimulation:
             return super().__getattribute__(item)
 
     def __repr__(self):
-        s = self.__doc__
+        s = self.__doc__ or ""
         s += f"Number of models: {len(self._models)}:\n"
         for name, obj in self._models.items():
             s += f"\t{name} : {type(obj)}\n"
@@ -368,8 +369,8 @@ class ApiSimulation:
         exchange_names = []
         for variable in variables:
             exchange_name = variable.split("/")[0]
-            parts = exchange_name.rsplit("_", 1)[0].split("-")
-            if len(parts) == 2 and parts[0] == parts[1] and exchange_name not in exchange_names:
+            name = exchange_name.rsplit("_", 1)[0]
+            if is_exg(name) and exchange_name not in exchange_names:
                 exchange_names.append(exchange_name)
 
         # sim_packages: tdis, gwf-gwf, sln

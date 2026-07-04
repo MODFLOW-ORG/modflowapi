@@ -1,3 +1,5 @@
+from os import PathLike
+
 from xmipy import XmiWrapper
 
 from .util import amend_libmf6_path
@@ -16,8 +18,8 @@ class ModflowApi(XmiWrapper):
 
     def __init__(
         self,
-        lib_path: str,
-        lib_dependency: str = None,
+        lib_path: str | PathLike,
+        lib_dependency: str | None = None,
         working_directory: str = ".",
         timing: bool = False,
         logger_level: int | str = 0,

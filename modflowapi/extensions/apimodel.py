@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..util import is_exg
 from .datamodel import get_package_type, gridshape
 from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
 
@@ -56,9 +57,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                parts = tmp[0].rsplit("_", 1)[0].split("-")
-                if len(parts) == 2 and parts[0] == parts[1]:
-                    pak_types[tmp[0]] = tmp[0].rsplit("_", 1)[0]
+                name = tmp[0].rsplit("_", 1)[0]
+                if is_exg(name):
+                    pak_types[tmp[0]] = name
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
