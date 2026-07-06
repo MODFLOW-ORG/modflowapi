@@ -88,7 +88,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
 
             if sim_grp.ats_period[0]:
                 mindt = sim_grp.ats_period[-1]
-                while sim_grp.delt > mindt:
+                while sim_grp.delt > mindt and kiter < maxiter:
                     sim_grp.iteration = kiter
                     callback(sim_grp, Callbacks.iteration_start)
                     has_converged = mf6.solve(sol_id)
