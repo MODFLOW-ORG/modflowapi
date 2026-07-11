@@ -334,15 +334,12 @@ def test_ats_timestep_shrink(function_tmpdir):
             if sim.kstp == 1:
                 assert delt0 > sim.delt, "timestep length wasn't reduced"
 
-        name = "ats0"
-        sim_pth = data_pth / name
-        test_pth = function_tmpdir / name
-        shutil.copytree(sim_pth, test_pth, dirs_exist_ok=True)
+    name = "ats0"
+    sim_pth = data_pth / name
+    test_pth = function_tmpdir / name
+    shutil.copytree(sim_pth, test_pth, dirs_exist_ok=True)
 
-        try:
-            run_simulation(so, test_pth, callback)
-        except Exception as e:
-            raise Exception(e)
+    run_simulation(so, test_pth, callback)
 
 
 def test_ats_timestep_retry(function_tmpdir, monkeypatch):
