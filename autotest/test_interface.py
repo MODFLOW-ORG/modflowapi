@@ -319,7 +319,12 @@ def test_two_models(function_tmpdir):
         raise Exception(e)
 
 
-def test_ats_model(function_tmpdir):
+def test_ats_timestep_shrink(function_tmpdir):
+    """
+    Check that ATS time step length is reduced between successful time
+    steps. This is unrelated to ATS retry-on-failure.
+    """
+
     def callback(sim, step):
         if step == Callbacks.stress_period_start:
             if sim.kper == 0 and sim.kstp == 0:
@@ -327,8 +332,7 @@ def test_ats_model(function_tmpdir):
 
         if step == Callbacks.timestep_start:
             if sim.kstp == 1:
-                if delt0 == sim.delt:
-                    raise AssertionError("ATS routines not reducing timestep length")
+                assert delt0 > sim.delt, "timestep length wasn't reduced"
 
         name = "ats0"
         sim_pth = data_pth / name
@@ -341,28 +345,27 @@ def test_ats_model(function_tmpdir):
             raise Exception(e)
 
 
-def test_timestep_retry_callback(function_tmpdir, monkeypatch):
+def test_ats_timestep_retry(function_tmpdir, monkeypatch):
     """
     Exercises run_simulation()'s ATS retry-loop control flow without
     needing a MODFLOW 6 library build that actually implements retry.
     """
+    # dict, not a bool, so fake_finish_retry can flip it without `nonlocal`
+    retried = {"done": False}
+    steps = []
+
+    def fake_finish_retry(_):
+        if retried["done"]:
+            return True
+        retried["done"] = True
+        return False
+
     monkeypatch.setattr(ModflowApi, "has_ats_retry", True)
     monkeypatch.setattr(ModflowApi, "prepare_retryloop", lambda self: None)
     monkeypatch.setattr(ModflowApi, "start_retry", lambda self: None)
-
-    retried = {"done": False}
-
-    def fake_finish_retry(self):
-        if not retried["done"]:
-            retried["done"] = True
-            return False
-        return True
-
     monkeypatch.setattr(ModflowApi, "finish_retry", fake_finish_retry)
 
-    steps = []
-
-    def callback(sim, step):
+    def callback(_, step):
         steps.append(step)
 
     name = "dis_model"
@@ -372,16 +375,21 @@ def test_timestep_retry_callback(function_tmpdir, monkeypatch):
 
     run_simulation(so, test_pth, callback)
 
-    assert retried["done"], "finish_retry was never called; retry loop not exercised"
+    # retried once
+    assert retried["done"]
     assert steps.count(Callbacks.timestep_retry) == 1
 
+    # sanity check multiple timesteps were solved
     n_start = steps.count(Callbacks.timestep_start)
     n_end = steps.count(Callbacks.timestep_end)
     assert n_start == n_end
-    assert n_start > 1  # more than one outer timestep ran
+    assert n_start > 1
 
+    # iteration_end should fire immediately before timestep_retry
     retry_idx = steps.index(Callbacks.timestep_retry)
     assert steps[retry_idx - 1] == Callbacks.iteration_end
+
+    # before retry, there should have been one full solve attempt
     assert steps[:retry_idx].count(Callbacks.timestep_start) == 1
     assert steps[:retry_idx].count(Callbacks.timestep_end) == 0
 
