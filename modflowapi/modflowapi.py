@@ -39,7 +39,7 @@ class ModflowApi(XmiWrapper):
     def has_ats_retry(self) -> bool:
         """
         Whether the MODFLOW 6 library exposes adaptive time stepping
-        (ATS) routines (prepare_retryloop, start_retry, finish_retry).
+        retry routines (prepare_retryloop, start_retry, finish_retry).
         """
         if self._has_ats_retry is None:
             self._has_ats_retry = hasattr(self.lib, "prepare_retryloop")

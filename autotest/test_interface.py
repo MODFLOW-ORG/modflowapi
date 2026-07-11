@@ -321,8 +321,8 @@ def test_two_models(function_tmpdir):
 
 def test_ats_timestep_shrink(function_tmpdir):
     """
-    Check that ATS time step length is reduced between successful time
-    steps. This is unrelated to ATS retry-on-failure.
+    Check that ATS time step length is reduced, reflecting dtadj,
+    between successful timesteps. Unrelated to retry-on-failure.
     """
 
     def callback(sim, step):

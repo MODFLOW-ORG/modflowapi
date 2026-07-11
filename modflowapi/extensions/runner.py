@@ -117,8 +117,6 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
 
                 finished = mf6.finish_retry() if supports_retry else True
                 if not finished:
-                    # MF6 has already reduced delt for the next attempt by
-                    # this point, so sim_grp.delt reflects the retry value
                     callback(sim_grp, Callbacks.timestep_retry)
 
             callback(sim_grp, Callbacks.timestep_end)
