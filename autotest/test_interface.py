@@ -341,6 +341,51 @@ def test_ats_model(function_tmpdir):
             raise Exception(e)
 
 
+def test_timestep_retry_callback(function_tmpdir, monkeypatch):
+    """
+    Exercises run_simulation()'s ATS retry-loop control flow without
+    needing a MODFLOW 6 library build that actually implements retry.
+    """
+    monkeypatch.setattr(ModflowApi, "has_ats_retry", True)
+    monkeypatch.setattr(ModflowApi, "prepare_retryloop", lambda self: None)
+    monkeypatch.setattr(ModflowApi, "start_retry", lambda self: None)
+
+    retried = {"done": False}
+
+    def fake_finish_retry(self):
+        if not retried["done"]:
+            retried["done"] = True
+            return False
+        return True
+
+    monkeypatch.setattr(ModflowApi, "finish_retry", fake_finish_retry)
+
+    steps = []
+
+    def callback(sim, step):
+        steps.append(step)
+
+    name = "dis_model"
+    sim_pth = data_pth / name
+    test_pth = function_tmpdir / name
+    shutil.copytree(sim_pth, test_pth, dirs_exist_ok=True)
+
+    run_simulation(so, test_pth, callback)
+
+    assert retried["done"], "finish_retry was never called; retry loop not exercised"
+    assert steps.count(Callbacks.timestep_retry) == 1
+
+    n_start = steps.count(Callbacks.timestep_start)
+    n_end = steps.count(Callbacks.timestep_end)
+    assert n_start == n_end
+    assert n_start > 1  # more than one outer timestep ran
+
+    retry_idx = steps.index(Callbacks.timestep_retry)
+    assert steps[retry_idx - 1] == Callbacks.iteration_end
+    assert steps[:retry_idx].count(Callbacks.timestep_start) == 1
+    assert steps[:retry_idx].count(Callbacks.timestep_end) == 0
+
+
 def test_rhs_hcof_advanced(function_tmpdir):
     def callback(sim, step):
         model = sim.test_model
