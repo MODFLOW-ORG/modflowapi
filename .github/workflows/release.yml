@@ -36,8 +36,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install build twine
-          pip install .
-          pip install ".[lint, test]"
+          pip install . --group dev
 
       - name: Update version
         id: version
@@ -143,8 +142,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install .
-          pip install ".[test]"
+          pip install .  --group test
 
       # actions/download-artifact won't look at previous workflow runs but we need to in order to get changelog
       - name: Download artifacts

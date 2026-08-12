@@ -38,11 +38,14 @@ dependencies = [
     "xmipy",
 ]
 
-[project.optional-dependencies]
-dev = ["modflowapi[test,lint]"]
+[dependency-groups]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+]
 test = [
     "filelock",
-    "modflow-devtools[test,dfn,models]>=1.9.1,<2",
+    "modflow-devtools[dfn,models]>=1.9.1,<2",
     "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
@@ -59,7 +62,6 @@ lint = [
     "ruff",
 ]
 docs = [
-    "modflowapi[test]",
     "sphinx",
     "sphinx-rtd-theme",
     "myst-parser",
@@ -68,6 +70,7 @@ docs = [
     "nbsphinx",
     "ipython",
     "flopy",
+    {include-group = "test"},
 ]
 
 [project.urls]
