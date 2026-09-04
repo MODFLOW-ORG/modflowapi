@@ -84,9 +84,6 @@ jobs:
       - name: Install
         run: uv sync --all-extras
 
-      - name: Install Python dependencies
-        run: uv pip install git+https://git@github.com/Deltares/xmipy@develop
-
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
         with:
@@ -126,9 +123,6 @@ jobs:
 
       - name: Install
         run: uv sync --all-extras
-
-      - name: Install Python dependencies
-        run: uv pip install git+https://git@github.com/Deltares/xmipy@develop
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
