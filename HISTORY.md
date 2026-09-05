@@ -1,4 +1,26 @@
 # Changelog
+### Version 1.0.0
+
+#### New features
+
+* [feat(GWE, PRT)](https://github.com/MODFLOW-ORG/modflowapi/commit/655ec0e5728fc44d1ba9a86cc8a9f805b32397c8): Updates for GWE and PRT support. Committed by jlarsen on 2024-07-24.
+* [feat(GWE, PRT)](https://github.com/MODFLOW-ORG/modflowapi/commit/5193948b41ab2f894d412b35a3caf64edab4c908): Updates for GWE and PRT support. Committed by Joshua Larsen on 2024-08-21.
+* [feat(advanced package support)](https://github.com/MODFLOW-ORG/modflowapi/commit/aafe9d0a336d09ff5783493106a01fe6de622959): Refactoring for advanced package support. Committed by Joshua Larsen on 2025-04-11.
+
+#### Bug fixes
+
+* [fix(model_names, X)](https://github.com/MODFLOW-ORG/modflowapi/commit/7aa43cad364fab1b5557df05aec662dc694d3b7c): Updates to ApiSimulation and ApiModel. Committed by Joshua Larsen on 2025-04-30.
+* [fix](https://github.com/MODFLOW-ORG/modflowapi/commit/1d112bb0ed3b71ee829b4dbc31f09461de2eb857): Skip interface model and connection variables (#95). Committed by wpbonelli on 2026-06-19.
+* [fix(apisimulation.py)](https://github.com/MODFLOW-ORG/modflowapi/commit/b547a5677601809ed24a447d55ffdae8403bd800): Fix exchange-related bugs (#99). Committed by wpbonelli on 2026-07-04.
+* [fix(runner.py)](https://github.com/MODFLOW-ORG/modflowapi/commit/73dd08712688c3586e3051f1012819c0907cbb0b): Cap picard iterations with ats (#102). Committed by wpbonelli on 2026-07-11.
+
+#### Refactoring
+
+* [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/1aea1c9d4e8e0020472f831892b313d8f67e6c33): Support python3.12, pin numpy<2, add status classifier (#43). Committed by wpbonelli on 2024-02-08.
+* [refactor(ci)](https://github.com/MODFLOW-ORG/modflowapi/commit/94aae77f189d62f9145af72792b6ce95c317dd3d): Update flopy classes prior to building mf6-examples. Committed by jlarsen on 2024-08-21.
+* [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/6f5ff7653a5f353a87a0578731714dd0f2d5dd3d): Generalize exchange detection (#100). Committed by wpbonelli on 2026-07-04.
+* [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/2796799a3b8017fb0686a583cb3cfc3fef314818): Miscellaneous (#101). Committed by wpbonelli on 2026-07-04.
+
 ### Version 0.2.0
 
 #### Refactoring
