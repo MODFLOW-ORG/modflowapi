@@ -19,7 +19,6 @@ This is the first stable release. modflowapi now follows semantic versioning, so
 
 #### Refactoring
 
-* [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/1aea1c9d4e8e0020472f831892b313d8f67e6c33): Support python3.12, pin numpy<2, add status classifier (#43). Committed by wpbonelli on 2024-02-08.
 * [refactor(ci)](https://github.com/MODFLOW-ORG/modflowapi/commit/94aae77f189d62f9145af72792b6ce95c317dd3d): Update flopy classes prior to building mf6-examples. Committed by jlarsen on 2024-08-21.
 * [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/6f5ff7653a5f353a87a0578731714dd0f2d5dd3d): Generalize exchange detection (#100). Committed by wpbonelli on 2026-07-04.
 * [refactor](https://github.com/MODFLOW-ORG/modflowapi/commit/2796799a3b8017fb0686a583cb3cfc3fef314818): Miscellaneous (#101). Committed by wpbonelli on 2026-07-04.
