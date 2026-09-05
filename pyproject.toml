@@ -21,7 +21,7 @@ keywords = ["MODFLOW", "groundwater", "hydrogeology", "bmi", "xmi"]
 license = "CC0-1.0"
 license-files = ["LICENSE"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -33,9 +33,9 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy",
-    "pandas",
-    "xmipy",
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "xmipy>=1.5.0",
 ]
 
 [dependency-groups]
