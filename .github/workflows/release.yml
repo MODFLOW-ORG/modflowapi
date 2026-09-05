@@ -44,8 +44,9 @@ jobs:
 
   prep:
     name: Prepare release
-    # runs on workflow_dispatch, or when a release branch is pushed
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'main') }}
+    # runs on workflow_dispatch, or when a release branch is first pushed.
+    # later pushes to the release branch must not prepare the release again.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'main' && github.event.created) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -195,6 +196,7 @@ jobs:
         shell: bash
     outputs:
       version: ${{ steps.release.outputs.version }}
+      released: ${{ steps.release.outputs.released }}
     steps:
 
       - name: Checkout main branch
@@ -214,8 +216,10 @@ jobs:
           # skip if this version has already been released
           if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
             echo "tag $version already exists, nothing to release"
+            echo "released=false" >> $GITHUB_OUTPUT
             exit 0
           fi
+          echo "released=true" >> $GITHUB_OUTPUT
 
           # pull this release's notes back out of the cumulative changelog
           notes=$(awk -v hdr="### Version $version" '
@@ -233,7 +237,7 @@ jobs:
     name: Publish package
     # runs after the release is created, or after a draft release is published manually
     needs: release
-    if: ${{ always() && github.repository_owner == 'MODFLOW-ORG' && ((github.event_name == 'push' && needs.release.result == 'success') || github.event_name == 'release') }}
+    if: ${{ always() && github.repository_owner == 'MODFLOW-ORG' && ((github.event_name == 'push' && needs.release.outputs.released == 'true') || github.event_name == 'release') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -275,7 +279,7 @@ jobs:
     name: Reset develop
     # runs after the release is created, opens a PR merging main back into develop
     needs: release
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.release.outputs.released == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
