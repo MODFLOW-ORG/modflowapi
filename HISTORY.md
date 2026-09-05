@@ -1,11 +1,14 @@
 # Changelog
 ### Version 1.0.0
 
+This is the first stable release. modflowapi now follows semantic versioning, so a breaking change to the `modflowapi` or `modflowapi.extensions` interface will increment the major version. The Python interface is unchanged from 0.2.0, but Python 3.9 and 3.10 are no longer supported; Python 3.11 or later is required.
+
 #### New features
 
 * [feat(GWE, PRT)](https://github.com/MODFLOW-ORG/modflowapi/commit/655ec0e5728fc44d1ba9a86cc8a9f805b32397c8): Updates for GWE and PRT support. Committed by jlarsen on 2024-07-24.
 * [feat(GWE, PRT)](https://github.com/MODFLOW-ORG/modflowapi/commit/5193948b41ab2f894d412b35a3caf64edab4c908): Updates for GWE and PRT support. Committed by Joshua Larsen on 2024-08-21.
 * [feat(advanced package support)](https://github.com/MODFLOW-ORG/modflowapi/commit/aafe9d0a336d09ff5783493106a01fe6de622959): Refactoring for advanced package support. Committed by Joshua Larsen on 2025-04-11.
+* [feat](https://github.com/MODFLOW-ORG/modflowapi/commit/f441475d298e8d2af0d683085b346ed780ff912b): Support logger_level init parameter (#92). Committed by wpbonelli on 2026-03-20.
 
 #### Bug fixes
 
