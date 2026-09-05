@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "modflowapi"
@@ -18,51 +18,88 @@ maintainers = [
 description = "modflowapi is an extension to the xmipy Python package"
 readme = "README.md"
 keywords = ["MODFLOW", "groundwater", "hydrogeology", "bmi", "xmi"]
-license = {text = "CC0"}
+license = "CC0-1.0"
+license-files = ["LICENSE"]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
-    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Hydrology",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
-    "numpy",
-    "pandas",
-    "xmipy",  # develop branch from github.com/Deltares/xmipy
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "xmipy>=1.5.0",
 ]
 
-[project.optional-dependencies]
-dev = ["modflowapi[test,lint]"]
+[dependency-groups]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+]
 test = [
     "filelock",
-    "modflow-devtools",  # develop branch from github.com/MODFLOW-USGS/modflow-devtools
-    "pytest",
+    "modflow-devtools[dfn,models]>=1.9.1,<2",
+    "pytest!=8.1.0",
     "pytest-order",
     "pytest-xdist",
+    "GitPython",
+    "pooch",
+    "scipy",
+    "pyshp",
+    "shapely",
+    "rasterio",
+    "rasterstats"
 ]
 lint = [
-    "black",
-    "flake8",
-    "isort",
-    "pylint",
+    "codespell[toml] >=2.2.2",
+    "ruff",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "jupyter",
+    "jupytext",
+    "nbsphinx",
+    "ipython",
+    "flopy",
+    {include-group = "test"},
 ]
 
 [project.urls]
-Repository = "https://github.com/MODFLOW-USGS/modflowapi"
+Repository = "https://github.com/MODFLOW-ORG/modflowapi"
 Publication = "https://doi.org/10.1016/j.envsoft.2021.105257"
 
-[tool.setuptools.dynamic]
-version = {attr = "modflowapi.version.__version__"}
+[tool.hatch.build.targets.sdist]
+only-include = ["modflowapi"]
 
-[tool.setuptools.packages.find]
-include = ["modflowapi", "modflowapi.*"]
+[tool.hatch.build.targets.wheel]
+packages = ["modflowapi"]
 
-[tool.black]
-line-length = 79
-target_version = ["py37"]
+[tool.hatch.version]
+path = "modflowapi/version.py"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E", "I001"]
+ignore = [
+    "F841" # local variable assigned but never used
+]
+
+[tool.codespell]
+skip = "cliff.toml,*.grb"
+ignore-words-list = [
+    "delt",
+    "wel",
+    "nam",
+    "ist",
+]

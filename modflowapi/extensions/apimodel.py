@@ -1,19 +1,10 @@
-from .pakbase import (
-    AdvancedPackage,
-    ArrayPackage,
-    ListPackage,
-    package_factory,
-)
+import math
+
 import numpy as np
 
-
-gridshape = {
-    "dis": ["nlay", "nrow", "ncol"],
-    "disu": [
-        "nlay",
-        "ncpl",
-    ],
-}
+from ..util import is_exg
+from .datamodel import get_package_type, gridshape
+from .pakbase import AdvancedPackage, ArrayPackage, ListPackage, package_factory
 
 
 class ApiMbase:
@@ -26,16 +17,17 @@ class ApiMbase:
         initialized ModflowApi object
     name : str
         modflow model name. ex. "GWF_1", "GWF-GWF_1"
-    pkg_types : dict
-        dictionary of package types and ApiPackage class types
+    pkg_types : None, dict
+        optional dictionary of package types and ApiPackage class types,
+        used to override the default package class selection
     """
 
-    def __init__(self, mf6, name, pkg_types):
+    def __init__(self, mf6, name, pkg_types=None):
         self.mf6 = mf6
         self.name = name
         self._pkg_names = None
         self._pak_type = None
-        self.pkg_types = pkg_types
+        self._pkg_types = pkg_types
         self.package_dict = {}
         self._set_package_names()
         self._create_package_list()
@@ -45,7 +37,7 @@ class ApiMbase:
         """
         Returns a list of package objects for the model
         """
-        return [package for _, package in self.package_dict.items()]
+        return list(self.package_dict.values())
 
     @property
     def package_names(self):
@@ -56,7 +48,7 @@ class ApiMbase:
 
     @property
     def package_types(self):
-        return list(set([package.pkg_type for package in self.package_list]))
+        return list({package.pkg_type for package in self.package_list})
 
     def _set_package_names(self):
         """
@@ -68,11 +60,9 @@ class ApiMbase:
             if addr.endswith("PACKAGE_TYPE") and tmp[0] == self.name:
                 pak_types[tmp[1]] = self.mf6.get_value(addr)[0]
             elif tmp[0] == self.name and len(tmp) == 2:
-                if tmp[0].startswith("GWF-GWF"):
-                    pak_types[tmp[0]] = "GWF-GWF"
-                    pak_types.pop("dis", None)
-                elif tmp[0].startswith("GWT-GWT"):
-                    pak_types[tmp[0]] = "GWT-GWT"
+                pkg_type = tmp[0].rsplit("_", 1)[0]
+                if is_exg(pkg_type):
+                    pak_types[tmp[0]] = pkg_type
                     pak_types.pop("dis", None)
 
         self._pak_type = list(pak_types.values())
@@ -84,15 +74,15 @@ class ApiMbase:
         """
         for ix, pkg_name in enumerate(self._pkg_names):
             pkg_type = self._pak_type[ix].lower()
-            if pkg_type in self.pkg_types:
-                basepackage = self.pkg_types[pkg_type]
+            if self._pkg_types is not None and pkg_type in self._pkg_types:
+                basepackage = self._pkg_types[pkg_type]
+            elif is_exg(pkg_type):
+                basepackage = ListPackage
             else:
-                basepackage = AdvancedPackage
+                basepackage = get_package_type(pkg_type)
 
             package = package_factory(pkg_type, basepackage)
-            adj_pkg_name = "".join(pkg_type.split("-"))
-
-            if adj_pkg_name.lower() in ("gwfgwf", "gwtgwt"):
+            if is_exg(pkg_type):
                 adj_pkg_name = ""
             else:
                 adj_pkg_name = pkg_name
@@ -100,9 +90,7 @@ class ApiMbase:
             package = package(basepackage, self, pkg_type, adj_pkg_name)
             self.package_dict[pkg_name.lower()] = package
 
-    def get_package(
-        self, pkg_name
-    ) -> ListPackage or ArrayPackage or AdvancedPackage:
+    def get_package(self, pkg_name) -> ListPackage or ArrayPackage or AdvancedPackage:
         """
         Method to get a package
 
@@ -115,9 +103,7 @@ class ApiMbase:
         if pkg_name in self.package_dict:
             return self.package_dict[pkg_name]
 
-        raise KeyError(
-            f"{pkg_name} is not a valid package name for this model"
-        )
+        raise KeyError(f"{pkg_name} is not a valid package name for this model")
 
 
 class ApiModel(ApiMbase):
@@ -148,29 +134,7 @@ class ApiModel(ApiMbase):
             self.dis_type = "disu"
             self.dis_name = "DIS"
         else:
-            raise AssertionError(
-                f"Unrecognized discretization type {grid_type}"
-            )
-
-        pkg_types = {
-            "dis": ArrayPackage,
-            "chd": ListPackage,
-            "drn": ListPackage,
-            "evt": ListPackage,
-            "ghb": ListPackage,
-            "ic": ArrayPackage,
-            "npf": ArrayPackage,
-            "rch": ListPackage,
-            "riv": ListPackage,
-            "sto": ArrayPackage,
-            "wel": ListPackage,
-            # gwt
-            "adv": ArrayPackage,
-            "cnc": ListPackage,
-            "ist": ArrayPackage,
-            "mst": ArrayPackage,
-            "src": ListPackage,
-        }
+            raise AssertionError(f"Unrecognized discretization type {grid_type}")
 
         self.allow_convergence = True
         self._shape = None
@@ -179,16 +143,13 @@ class ApiModel(ApiMbase):
         self._usertonode = None
         self._iteration = 0
 
-        super().__init__(mf6, name, pkg_types)
+        super().__init__(mf6, name)
 
     def __repr__(self):
         s = f"{self.name}, "
         shape = self.shape
         if self.dis_type == "dis":
-            s += (
-                f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} "
-                f"Column model\n"
-            )
+            s += f"{shape[0]} Layer, {shape[1]} Row, {shape[2]} Column model\n"
 
         elif self.dis_type == "disu":
             if len(shape) == 2:
@@ -301,20 +262,16 @@ class ApiModel(ApiMbase):
         """
         Returns a tuple of the model shape
         """
-        ivn = self.mf6.get_input_var_names()
         if self._shape is None:
+            ivn = self.mf6.get_input_var_names()
             shape_vars = gridshape[self.dis_type]
             shape = []
             for var in shape_vars:
-                var_addr = self.mf6.get_var_address(
-                    var.upper(), self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address(var.upper(), self.name, self.dis_name)
                 if var_addr in ivn:
                     shape.append(self.mf6.get_value(var_addr)[0])
             if not shape:
-                var_addr = self.mf6.get_var_address(
-                    "NODES", self.name, self.dis_name
-                )
+                var_addr = self.mf6.get_var_address("NODES", self.name, self.dis_name)
                 shape.append(self.mf6.get_value(var_addr)[0])
             self._shape = tuple(shape)
         return self._shape
@@ -325,10 +282,7 @@ class ApiModel(ApiMbase):
         Returns the number of nodes in the model
         """
         if self._size is None:
-            size = 1
-            for dim in self.shape:
-                size *= dim
-            self._size = size
+            self._size = math.prod(self.shape)
         return self._size
 
     @property
@@ -357,7 +311,7 @@ class ApiModel(ApiMbase):
         """
         x = self.mf6.get_value(self.mf6.get_var_address("X", self.name))
         array = np.full(self.size, np.nan)
-        array[self.nodetouser] = x
+        array[self.nodetouser] = x[: self.nodetouser.size]
         return array.reshape(self.shape)
 
     def _set_node_mapping(self):
@@ -366,18 +320,14 @@ class ApiModel(ApiMbase):
         user arrays to modflow's internal arrays
         """
         node_addr = self.mf6.get_var_address("NODES", self.name, self.dis_name)
-        nodes = self.mf6.get_value(node_addr)
-        if nodes[0] == self.size:
+        nodes = self.mf6.get_value(node_addr).item()
+        if nodes == self.size:
             nodeuser = np.arange(nodes).astype(int)
             nodereduced = np.copy(nodeuser)
         else:
-            nodeuser_addr = self.mf6.get_var_address(
-                "NODEUSER", self.name, self.dis_name
-            )
+            nodeuser_addr = self.mf6.get_var_address("NODEUSER", self.name, self.dis_name)
             nodeuser = self.mf6.get_value(nodeuser_addr) - 1
-            nodereduced_addr = self.mf6.get_var_address(
-                "NODEREDUCED", self.name, self.dis_name
-            )
+            nodereduced_addr = self.mf6.get_var_address("NODEREDUCED", self.name, self.dis_name)
             nodereduced = self.mf6.get_value(nodereduced_addr) - 1
 
         self._nodetouser = nodeuser

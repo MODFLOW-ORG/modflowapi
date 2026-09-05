@@ -1,0 +1,8 @@
+# change CRLF to LF line endings for source files (#12)
+e0ca9e80a60ae6c85933a69ec322a5bc861a32ab
+
+# apply isort rule, split long comment lines (#47)
+0c632e511fb54068d14dcdff44c572ccb6e8831f
+
+# reformat Python code with line length = 88 (#57)
+4cee570791f7b9631179f7c42286a07d9b232fb0

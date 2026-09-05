@@ -3,11 +3,11 @@ message: If you use this software, please cite both the article from preferred-c
   and the software itself.
 type: software
 title: MODFLOW API
-version: 0.2.0
-date-released: '2023-04-19'
+version: 1.0.0
+date-released: '2026-09-05'
 abstract: An extension to xmipy for the MODFLOW API.
 repository-artifact: https://pypi.org/project/modflowapi
-repository-code: https://github.com/MODFLOW-USGS/modflowapi
+repository-code: https://github.com/MODFLOW-ORG/modflowapi
 license: CC0-1.0
 authors:
 - family-names: Hughes

@@ -4,13 +4,11 @@ on:
   schedule:
     - cron: '0 8 * * *' # run at 8 AM UTC (12 am PST)
   push:
-    branches:
-      - main
-      - develop
-      - 'release*'
   pull_request:
     branches: [main, develop]
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
 
   std_setup:
@@ -21,77 +19,45 @@ jobs:
     defaults:
       run:
         shell: bash
-
     steps:
 
-    # check out repo
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: 3.x
-
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
-
-    - name: Base installation
-      run: |
-        pip install -e .
+        cache-dependency-glob: "**/pyproject.toml"
         
     - name: Print version
-      run: |
-        python -c "import modflowapi; print(modflowapi.__version__)"
-
+      run: uv run python -c "import modflowapi; print(modflowapi.__version__)"
 
   lint:
     name: lint
     runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
     strategy:
       fail-fast: false
     defaults:
       run:
         shell: bash
-
-    if: github.event_name != 'schedule'
     steps:
-    # check out repo
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # Standard python fails on Windows without GDAL installation. Using
-    # standard python here since only linting on linux.
-    # Use standard bash shell with standard python
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: 3.x
+        enable-cache: false
 
-    - name: Print python version
-      run: |
-        python --version
+    - name: Lint
+      run: uvx ruff check .
 
-    - name: Install Python packages
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[lint]
+    - name: Format
+      run: uvx ruff format . --check
 
-    - name: Run black
-      run: |
-        echo "if black check fails run"
-        echo "  black ./modflowapi"
-        echo "and then commit the changes."
-        black --check ./modflowapi
-
-    - name: Run flake8
-      run: |
-        flake8 --count --show-source --exit-zero ./modflowapi
-
-    - name: Run pylint
-      run: |
-        pylint --jobs=2 --errors-only --exit-zero ./modflowapi
+    - name: Spelling
+      run: uvx codespell
 
   autotest_extensions:
     name: modflowapi extensions autotests
@@ -101,29 +67,22 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.8, 3.9, "3.10", "3.11" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
     defaults:
       run:
         shell: bash
-
     steps:
-      # check out repo
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
-          pip install .[test]
+      - name: Install
+        run: uv sync --all-extras
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
@@ -131,10 +90,14 @@ jobs:
           path: ${{ github.workspace }}/autotest
           repo: modflow6-nightly-build
 
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
+
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: pytest -v -n auto -m "not mf6"
+        run: uv run pytest -v -n auto -m "not mf6"
         
   autotest_preidm_extensions:
     name: modflowapi pre-idm extensions autotests
@@ -143,30 +106,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.8, 3.9, "3.10", "3.11" ]
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
     defaults:
       run:
         shell: bash
-
     steps:
-      # check out repo
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
-          pip install .[test]
+      - name: Install
+        run: uv sync --all-extras
 
       - name: Install modflow executables
         uses: modflowpy/install-modflow-action@v1
@@ -174,6 +130,10 @@ jobs:
           path: ${{ github.workspace }}/autotest
           repo: executables
           tag: "14.0"
+
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
 
       - name: Run autotests
         working-directory: ./autotest
@@ -188,37 +148,34 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.8, 3.9, "3.10", "3.11" ]
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
     defaults:
       run:
         shell: bash
-
     steps:
-      # check out repo
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
         with:
+          cache-dependency-glob: "**/pyproject.toml"
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install git+https://git@github.com/Deltares/xmipy@develop
-          pip install git+https://git@github.com/MODFLOW-USGS/modflow-devtools@develop
-          pip install .[test]
+      - name: Install
+        run: uv sync --all-extras
 
-      - name: Install modflow executables
+      - name: Install modflow6 nightly build
         uses: modflowpy/install-modflow-action@v1
         with:
           path: ${{ github.workspace }}/autotest
           repo: modflow6-nightly-build
 
+      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
+      - name: Sync devtools
+        run: uv run mf sync
+
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: pytest -v -n auto -m "mf6 and not extensions"
+        run: uv run pytest -v -n auto test_mf6_examples.py

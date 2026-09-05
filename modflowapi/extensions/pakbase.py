@@ -1,176 +1,7 @@
 import numpy as np
 
 from .data import AdvancedInput, ArrayInput, ListInput, ScalarInput
-
-# Note: HFB variables are not accessible in the memory manager 10/7/2022
-pkgvars = {
-    "dis": ["top", "bot", "area", "idomain"],
-    "chd": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        ("bound", ("head",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "drn": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        (
-            "bound",
-            (
-                "elev",
-                "cond",
-            ),
-        ),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "evt": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        (
-            "bound",
-            (
-                "surface",
-                "rate",
-                "depth",
-            ),
-        ),
-        # "pxdp:NSEG", "petm:NSEG"
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ghb": [
-        "nbound",
-        "maxbound",
-        "nodelist",
-        (
-            "bound",
-            (
-                "bhead",
-                "cond",
-            ),
-        ),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ic": ["strt"],
-    "npf": ["k11", "k22", "k33", "angle1", "angle2", "angle3", "icelltype"],
-    "rch": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("recharge",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "riv": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("stage", "cond", "rbot")),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "sto": ["iconvert", "ss", "sy"],
-    "wel": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("q",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    # gwt model
-    "adv": ["diffc", "alh", "alv", "ath1", "ath2", "atv"],
-    "cnc": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("conc",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    "ist": [
-        "cim",
-        "thtaim",
-        "zetaim",
-        "decay",
-        "decay_sorbed",
-        "bulk_density",
-        "distcoef",
-    ],
-    "mst": ["porosity", "decay", "decay_sorbed", "bulk_density", "distcoef"],
-    "src": [
-        "maxbound",
-        "nbound",
-        "nodelist",
-        ("bound", ("smassrate",)),
-        "naux",
-        "auxname_cst",
-        "auxvar",
-    ],
-    # exchange model
-    "gwf-gwf": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc"],
-    "gwt-gwt": ["nexg", "nodem1", "nodem2", "cl1", "cl2", "ihc"],
-    # simulation
-    "ats": [
-        "maxats",
-        "iperats",
-        "dt0",
-        "dtmin",
-        "dtmax",
-        "dtadj",
-        "dtfailadj",
-    ],
-    "tdis": [
-        "nper",
-        "itmuni",
-        "kper",
-        "kstp",
-        "delt",
-        "pertim",
-        "totim,",
-        "perlen",
-        "nstp",
-        "tsmult",
-    ],
-    # solution package
-    "sln": [
-        "mxiter",
-        "dvclose",
-        "gamma",
-        "theta",
-        "akappa",
-        "amomentum",
-        "numtrack",
-        "btol",
-        "breduc",
-        "res_lim",
-    ],
-    "ims": [
-        "niterc",
-        "dvclose",
-        "rclose",
-        "relax",
-        "ipc",
-        "droptol",
-        "north",
-        "iscl",
-        "iord",
-    ],
-}
+from .datamodel import adv_pkgvars, pkgvars
 
 
 class PackageBase:
@@ -213,9 +44,7 @@ class PackageBase:
                         t = bv.split(":")
                         if len(t) == 2:
                             # this is a repeating variable
-                            addr = self.model.mf6.get_var_address(
-                                t[-1].upper(), self.model.name, self.pkg_name
-                            )
+                            addr = self.model.mf6.get_var_address(t[-1].upper(), self.model.name, self.pkg_name)
                             nrep = self.model.mf6.get_value(addr)[0]
                             if nrep > 1:
                                 for rep in range(nrep):
@@ -229,23 +58,14 @@ class PackageBase:
                     var = var[0]
 
                 if sim_package:
-                    var_addrs.append(
-                        self.model.mf6.get_var_address(
-                            var.upper(), self.pkg_name
-                        )
-                    )
+                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.pkg_name))
                 else:
-                    var_addrs.append(
-                        self.model.mf6.get_var_address(
-                            var.upper(), self.model.name, self.pkg_name
-                        )
-                    )
+                    var_addrs.append(self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name))
 
         for var in self._bound_vars:
-            addr_chk = self.model.mf6.get_var_address(
-                var.upper(), self.model.name, self.pkg_name
-            )
+            addr_chk = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
             if addr_chk in self.model.mf6.get_input_var_names():
+                # change this to use idm
                 self._idm_enabled = True
                 var_addrs.append(addr_chk)
 
@@ -306,17 +126,11 @@ class PackageBase:
         """
         name = name.lower()
         if name not in self.advanced_vars:
-            raise AssertionError(
-                f"{name} is not accessible as an advanced "
-                f"variable for this package"
-            )
+            raise AssertionError(f"{name} is not accessible as an advanced variable for this package")
 
         values = self._variables_adv.get_variable(name)
         if not self._sim_package:
-            if (
-                values.size == self.model.nodetouser.size
-                and self._child_type == "array"
-            ):
+            if values.size == self.model.nodetouser.size and self._child_type == "array":
                 array = np.full(self.model.size, np.nan)
                 array[self.model.nodetouser] = values
                 return array
@@ -344,9 +158,7 @@ class PackageBase:
     def rhs(self):
         if not self._sim_package:
             if self._rhs is None:
-                var_addr = self.model.mf6.get_var_address(
-                    "RHS", self.model.name, self.pkg_name
-                )
+                var_addr = self.model.mf6.get_var_address("RHS", self.model.name, self.pkg_name)
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._rhs = self.model.mf6.get_value_ptr(var_addr)
                 else:
@@ -367,9 +179,7 @@ class PackageBase:
     def hcof(self):
         if not self._sim_package:
             if self._hcof is None:
-                var_addr = self.model.mf6.get_var_address(
-                    "HCOF", self.model.name, self.pkg_name
-                )
+                var_addr = self.model.mf6.get_var_address("HCOF", self.model.name, self.pkg_name)
                 if var_addr in self.model.mf6.get_input_var_names():
                     self._hcof = self.model.mf6.get_value_ptr(var_addr)
                 else:
@@ -404,9 +214,7 @@ class ListPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "list", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "list", sim_package)
 
         self._variables = ListInput(self)
 
@@ -447,9 +255,7 @@ class ListPackage(PackageBase):
         elif recarray is None:
             self._variables.values = recarray
         else:
-            raise TypeError(
-                f"{type(recarray)} is not a supported stress_period_data type"
-            )
+            raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
 
 
 class ArrayPackage(PackageBase):
@@ -469,9 +275,7 @@ class ArrayPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "array", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "array", sim_package)
 
         self._variables = ArrayInput(self)
 
@@ -487,12 +291,7 @@ class ArrayPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -567,9 +366,7 @@ class ScalarPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "scalar", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "scalar", sim_package)
 
         self._variables = ScalarInput(self)
 
@@ -585,12 +382,7 @@ class ScalarPackage(PackageBase):
         Method that enables dynamic variable setting and distributes
         modflow variable storage and updates to the data object class
         """
-        if item in (
-            "model",
-            "pkg_name",
-            "pkg_type",
-            "var_addrs",
-        ):
+        if item in ("model", "pkg_name", "pkg_type", "var_addrs"):
             super().__setattr__(item, value)
 
         elif item.startswith("_"):
@@ -598,6 +390,10 @@ class ScalarPackage(PackageBase):
 
         elif item in self._variables._ptrs:
             self._variables.set_value(item, value)
+
+        elif item in ("mxiter",):
+            # hack for sln-ems
+            super().__setattr__(item, value)
 
         else:
             raise AttributeError(f"{item}")
@@ -665,9 +461,48 @@ class AdvancedPackage(PackageBase):
     """
 
     def __init__(self, model, pkg_type, pkg_name, sim_package=False):
-        super().__init__(
-            model, pkg_type, pkg_name.upper(), "advanced", sim_package
-        )
+        super().__init__(model, pkg_type, pkg_name.upper(), "advanced", sim_package)
+
+        self._idm_enabled = False
+        self._package_var_addrs = []
+        self._sp_var_addrs = []
+        self._package_vars = None
+        self._sp_vars = None
+
+        if pkg_type in adv_pkgvars:
+            self._adv_var_dict = adv_pkgvars[pkg_type]
+
+            self._set_advanced_variable_addrs("packagedata", "_package_var_addrs")
+
+            if "perioddata" in self._adv_var_dict:
+                # create variable addresses!!!!
+                for var in self._adv_var_dict["perioddata"]:
+                    if isinstance(var, tuple):
+                        use_bound = True
+                        for v in var[-1]:
+                            if ":" in v:
+                                use_bound = False
+
+                        if use_bound:
+                            self._bound_vars = var[-1]
+                            var = var[0]
+                        else:
+                            for v in var[-1]:
+                                if ":" in v:
+                                    tmp = v.split(":")[0]
+                                    self._bound_vars.append(tmp)
+                                else:
+                                    self._bound_vars.append(v)
+                                var_addr = self._get_advanced_variable_addr(v)
+                                self._sp_var_addrs.append(var_addr)
+                            var = None
+
+                    if var is not None:
+                        var_addr = self.model.mf6.get_var_address(var.upper(), self.model.name, self.pkg_name)
+                        self._sp_var_addrs.append(var_addr)
+
+            self._package_vars = ListInput(self, self._package_var_addrs, spd=False)
+            self._sp_vars = ListInput(self, self._sp_var_addrs)
 
     def __repr__(self):
         s = f"{self.pkg_type.upper()} Package: {self.pkg_name} \n"
@@ -675,10 +510,110 @@ class AdvancedPackage(PackageBase):
         s += " get_advanced_var() and set_advanced_var() methods"
         return s
 
+    def _set_advanced_variable_addrs(self, block, attr):
+        """
+        General method for setting advanced variable block addresses
+        to their attributes. Method is used to reduce code duplication
+
+        Parameters
+        ----------
+        block : str
+            data block key
+        attr : str
+            attribute name
+
+        Returns
+        -------
+            None
+        """
+        var_addrs = []
+        if block in self._adv_var_dict:
+            for var in self._adv_var_dict[block]:
+                if not isinstance(var, tuple):
+                    var_addrs.append(self._get_advanced_variable_addr(var))
+                else:
+                    for v in var:
+                        var_addrs.append(self._get_advanced_variable_addr(v))
+
+        setattr(self, attr, var_addrs)
+
+    def _get_advanced_variable_addr(self, var_str):
+        """
+        Method to create variable addresses for advanced packages that can
+        include non-standard logic and processing instructions
+
+        Parameters
+        ----------
+        var_str : str
+
+        Returns
+        -------
+            var_addr : str
+        """
+        s = f"{self.model.name}/{self.pkg_name}/{var_str.upper()}"
+        return s
+
+    @property
+    def packagedata(self):
+        """
+        Returns a BlockInput object of the packagedata
+        """
+        return self._package_vars
+
+    @packagedata.setter
+    def packagedata(self, recarray):
+        """
+        Setter method to update the packagedata
+
+        Parameters
+        ----------
+        recarray : np.recarray, ListInput, or None
+
+        """
+        if self._package_vars is not None:
+            if isinstance(recarray, np.recarray):
+                self._package_vars.values = recarray
+            elif isinstance(recarray, ListInput):
+                self._package_vars.values = recarray.values
+            elif recarray is None:
+                self._package_vars.values = recarray
+            else:
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
+
+    @property
+    def maxbound(self):
+        """
+        Returns the "maxbound" value for the stress period
+        """
+        if self._sp_vars is not None:
+            return self._sp_vars._maxbound[0]
+
+    @property
+    def stress_period_data(self):
+        """
+        Returns a ListInput object of the current stress_period_data
+        """
+        return self._sp_vars
+
+    @stress_period_data.setter
+    def stress_period_data(self, recarray):
+        """
+        Setter method to update the current stress_period_data
+        """
+        if self._sp_vars is not None:
+            if isinstance(recarray, np.recarray):
+                self._sp_vars.values = recarray
+            elif isinstance(recarray, ListInput):
+                self._sp_vars.values = recarray.values
+            elif recarray is None:
+                self._sp_vars.values = recarray
+            else:
+                raise TypeError(f"{type(recarray)} is not a supported stress_period_data type")
+
 
 class ApiSlnPackage(ScalarPackage):
     """
-    Class to acess solution packages
+    Class to access solution packages
 
     Parameters
     ----------
@@ -690,21 +625,24 @@ class ApiSlnPackage(ScalarPackage):
         package name (in the mf6 variables)
     sim_package : bool
         boolean flag for simulation level packages. Ex. TDIS, IMS
+    sln_type : str
+        ackronymn for the solution package type, default is "ims"
     """
 
-    def __init__(self, sim, pkg_name):
+    def __init__(self, sim, pkg_name, pkg_type="ims"):
         from .apimodel import ApiMbase
 
-        super().__init__(sim, "sln", pkg_name, sim_package=True)
+        super().__init__(sim, f"sln-{pkg_type}", pkg_name, sim_package=True)
 
-        mdl = ApiMbase(
-            sim.mf6, pkg_name.upper(), pkg_types={"ims": ScalarPackage}
-        )
-        imslin = ScalarPackage(mdl, "ims", "IMSLINEAR")
-        for key, ptr in imslin._variables._ptrs.items():
-            if key in self._variables._ptrs:
-                key = f"{imslin.pkg_type}_{key}".lower()
-            self._variables._ptrs[key] = ptr
+        if pkg_type in ("ims",):
+            mdl = ApiMbase(sim.mf6, pkg_name.upper(), pkg_types={pkg_type: ScalarPackage})
+            imslin = ScalarPackage(mdl, "ims", "IMSLINEAR")
+            for key, ptr in imslin._variables._ptrs.items():
+                if key in self._variables._ptrs:
+                    key = f"{imslin.pkg_type}_{key}".lower()
+                self._variables._ptrs[key] = ptr
+        else:
+            self.mxiter = 10
 
 
 def package_factory(pkg_type, basepackage):
@@ -730,10 +668,6 @@ def package_factory(pkg_type, basepackage):
     cls_str = "".join(pkg_type.split("-"))
     cls_str = f"{cls_str[0].upper()}{cls_str[1:]}"
 
-    package = type(
-        f"Api{cls_str}Package",
-        (basepackage,),
-        {"__init__": __init__},
-    )
+    package = type(f"Api{cls_str}Package", (basepackage,), {"__init__": __init__})
 
     return package

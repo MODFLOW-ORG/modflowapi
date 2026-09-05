@@ -10,7 +10,7 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
     #### {{ group | upper_first }}
     {% for commit in commits %}
-        * [{{ commit.group }}{% if commit.scope %}({{ commit.scope }}){% endif %}](https://github.com/MODFLOW-USGS/modflowapi/commit/{{ commit.id }}): {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | upper_first }}. Committed by {{ commit.author.name }} on {{ commit.author.timestamp | date(format="%Y-%m-%d") }}.\
+        * [{{ commit.group }}{% if commit.scope %}({{ commit.scope }}){% endif %}](https://github.com/MODFLOW-ORG/modflowapi/commit/{{ commit.id }}): {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | upper_first }}. Committed by {{ commit.author.name }} on {{ commit.author.timestamp | date(format="%Y-%m-%d") }}.\
     {% endfor %}
 {% endfor %}\n
 """

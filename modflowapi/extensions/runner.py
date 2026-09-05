@@ -1,8 +1,7 @@
+from enum import Enum
+
 from .. import ModflowApi
 from .apisimulation import ApiSimulation
-import pathlib
-import platform
-from enum import Enum
 
 
 class Callbacks(Enum):
@@ -56,6 +55,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
     callback(sim, Callbacks.initialize)
 
     has_converged = False
+    failed_timesteps = 0
     current_time = mf6.get_current_time()
     end_time = mf6.get_end_time()
     kperold = [0 for _ in range(sim.subcomponent_count)]
@@ -65,10 +65,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
         mf6.prepare_time_step(dt)
 
         if verbose:
-            print(
-                f"Solving: Stress Period {sim.kper + 1}; "
-                f"Timestep {sim.kstp + 1}"
-            )
+            print(f"Solving: Stress Period {sim.kper + 1}; Timestep {sim.kstp + 1}")
 
         for sol_id, slnobj in sorted(sim.solutions.items()):
             models = {}
@@ -78,9 +75,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
                 if sol_id == model.solution_id:
                     models[model.name.lower()] = model
 
-            sim_grp = ApiSimulation(
-                mf6, models, solution, sim._exchanges, sim.tdis, sim.ats
-            )
+            sim_grp = ApiSimulation(mf6, models, solution, sim._exchanges, sim.tdis, sim.ats)
             mf6.prepare_solve(sol_id)
             if sim.kper != kperold[sol_id - 1]:
                 callback(sim_grp, Callbacks.stress_period_start)
@@ -93,7 +88,7 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
 
             if sim_grp.ats_period[0]:
                 mindt = sim_grp.ats_period[-1]
-                while sim_grp.delt > mindt:
+                while sim_grp.delt > mindt and kiter < maxiter:
                     sim_grp.iteration = kiter
                     callback(sim_grp, Callbacks.iteration_start)
                     has_converged = mf6.solve(sol_id)
@@ -114,15 +109,17 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
 
             callback(sim_grp, Callbacks.timestep_end)
             mf6.finalize_solve(sol_id)
+            if sim_grp.nstp == sim_grp.kstp + 1:
+                callback(sim_grp, Callbacks.stress_period_end)
 
         mf6.finalize_time_step()
         current_time = mf6.get_current_time()
 
         if not has_converged:
-            print(f"Simulation group: {sim_grp} DID NOT CONVERGE")
-
-        if sim_grp.nstp == sim_grp.kstp + 1:
-            callback(sim_grp, Callbacks.stress_period_end)
+            failed_timesteps += 1
+            msg = f".........Stress Period {sim_grp.kper + 1}; "
+            msg += f"Timestep {sim_grp.kstp + 1} did not converge"
+            print(msg)
 
     try:
         callback(sim, Callbacks.finalize)
@@ -130,4 +127,9 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
     except Exception:
         raise RuntimeError("MF6 simulation failed, check listing file")
 
-    print("NORMAL TERMINATION OF SIMULATION")
+    if failed_timesteps > 0:
+        msg = "\nAbnormal termination of simulation.\n"
+        msg += f"Convergence failed {failed_timesteps} times."
+        print(msg)
+    else:
+        print("\nNormal termination of simulation.")
