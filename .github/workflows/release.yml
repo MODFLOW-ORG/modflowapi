@@ -104,10 +104,10 @@ jobs:
           uv run scripts/update_version.py -v "${{ steps.version.outputs.version }}"
           uv run python -c "import modflowapi; print('Version: ', modflowapi.__version__)"
 
-      - name: Lint and format
+      - name: Check style
         run: |
-          uvx ruff check --fix .
-          uvx ruff format .
+          uvx ruff check .
+          uvx ruff format --check .
           uvx codespell
 
       - name: Install modflow executables
@@ -167,7 +167,7 @@ jobs:
           git config core.sharedRepository true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add version.txt modflowapi/version.py CITATION.cff HISTORY.md
           git commit -m "ci(release): set version to $ver, update changelog"
           git push origin "v$ver"
 
@@ -317,7 +317,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add -A
+          git add version.txt modflowapi/version.py CITATION.cff
           git commit -m "ci(release): update version to $next"
           git push origin "$branch"
 
