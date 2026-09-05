@@ -142,6 +142,15 @@ uv.lock
 # temporary test folders
 autotest/temp/**
 
+# modflow executables installed for testing
+autotest/mf6
+autotest/mf5to6
+autotest/zbud6
+autotest/libmf6.*
+autotest/mf6.exe
+autotest/mf5to6.exe
+autotest/zbud6.exe
+
 # notebooks
 docs/examples/notebooks/*.ipynb
 
