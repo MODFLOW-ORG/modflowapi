@@ -315,6 +315,12 @@ mf6.finalize()
 #       the user to make adjustments to stress packages and check values of stress packages at the end of each
 #       outer solution iteration.
 #    - `Callbacks.finalize`: the finalize callback is useful for finalizing models coupled with the modflowapi.
+#    - `Callbacks.timestep_retry`: the timestep_retry callback fires when an adaptive time stepping (ATS)
+#       timestep fails to converge and MODFLOW 6 is about to retry it with a reduced timestep length. This
+#       requires a MODFLOW 6 library built with ATS retry support (`modflowapi.ModflowApi.has_ats_retry`);
+#       on older MODFLOW 6 builds, a failed timestep is not retried and this callback never fires. By the time
+#       this callback fires, MODFLOW 6 has already reduced `delt` for the upcoming retry, so it can be read
+#       from the simulation object passed to the callback.
 #
 # The user can use any or all of these callbacks within their callback function
 

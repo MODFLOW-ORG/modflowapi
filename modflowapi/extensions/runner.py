@@ -1,3 +1,4 @@
+import warnings
 from enum import Enum
 
 from .. import ModflowApi
@@ -13,6 +14,7 @@ class Callbacks(Enum):
     iteration_start = 5
     iteration_end = 6
     finalize = 7
+    timestep_retry = 8
 
 
 def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
@@ -47,6 +49,14 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
     mf6.initialize()
     sim = ApiSimulation.load(mf6)
 
+    if sim.ats_active and not mf6.has_ats_retry:
+        warnings.warn(
+            "ATS is active but this MODFLOW 6 library does not support it."
+            "Non-converging timesteps will fail instead of being retried."
+            "Install a newer MODFLOW 6 library to enable ATS support.",
+            stacklevel=2,
+        )
+
     if _develop:
         with open("var_list.txt", "w") as foo:
             for name in mf6.get_input_var_names():
@@ -76,28 +86,25 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
                     models[model.name.lower()] = model
 
             sim_grp = ApiSimulation(mf6, models, solution, sim._exchanges, sim.tdis, sim.ats)
-            mf6.prepare_solve(sol_id)
             if sim.kper != kperold[sol_id - 1]:
                 callback(sim_grp, Callbacks.stress_period_start)
                 kperold[sol_id - 1] += 1
             elif current_time == 0:
                 callback(sim_grp, Callbacks.stress_period_start)
 
-            kiter = 0
             callback(sim_grp, Callbacks.timestep_start)
 
-            if sim_grp.ats_period[0]:
-                mindt = sim_grp.ats_period[-1]
-                while sim_grp.delt > mindt and kiter < maxiter:
-                    sim_grp.iteration = kiter
-                    callback(sim_grp, Callbacks.iteration_start)
-                    has_converged = mf6.solve(sol_id)
-                    callback(sim_grp, Callbacks.iteration_end)
-                    kiter += 1
-                    if has_converged and sim_grp.allow_convergence:
-                        break
+            supports_retry = mf6.has_ats_retry
+            if supports_retry:
+                mf6.prepare_retryloop()
 
-            else:
+            finished = False
+            while not finished:
+                if supports_retry:
+                    mf6.start_retry()
+
+                mf6.prepare_solve(sol_id)
+                kiter = 0
                 while kiter < maxiter:
                     sim_grp.iteration = kiter
                     callback(sim_grp, Callbacks.iteration_start)
@@ -106,9 +113,13 @@ def run_simulation(dll, sim_path, callback, verbose=False, _develop=False):
                     kiter += 1
                     if has_converged and sim_grp.allow_convergence:
                         break
+                mf6.finalize_solve(sol_id)
+
+                finished = mf6.finish_retry() if supports_retry else True
+                if not finished:
+                    callback(sim_grp, Callbacks.timestep_retry)
 
             callback(sim_grp, Callbacks.timestep_end)
-            mf6.finalize_solve(sol_id)
             if sim_grp.nstp == sim_grp.kstp + 1:
                 callback(sim_grp, Callbacks.stress_period_end)
 
