@@ -1,4 +1,10 @@
 # Changelog
+### Version 1.0.1
+
+#### Bug fixes
+
+* [fix(dependencies)](https://github.com/MODFLOW-ORG/modflowapi/commit/adbfd151b14861360fbb9fb67f48bcff87f7d43f): Require a pandas that supports numpy 2 (#118). Committed by Joseph Hughes on 2026-09-06.
+
 ### Version 1.0.0
 
 This is the first stable release. modflowapi now follows semantic versioning, so a breaking change to the `modflowapi` or `modflowapi.extensions` interface will increment the major version. The Python interface is unchanged from 0.2.0, but Python 3.9 and 3.10 are no longer supported; Python 3.11 or later is required.
