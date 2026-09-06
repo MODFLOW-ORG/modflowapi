@@ -52,6 +52,23 @@ Merging the release pull request into `main` triggers jobs that:
 
 Merge the reset pull request to finish the release.
 
+## 4. conda-forge
+
+A few hours after the upload to PyPI, a bot opens a version pull request on the
+[feedstock](https://github.com/conda-forge/modflowapi-feedstock). To start it immediately instead,
+open an issue there titled `@conda-forge-admin, please update version`.
+
+> [!IMPORTANT]
+> The bot updates the version number and the checksum, and nothing else. **Check the recipe's
+> `host` and `run` requirements against the dependencies the release actually declares**, which are
+> the `Requires-Dist` lines of the sdist on PyPI. Both releases so far needed this by hand: 1.0.0
+> because the build backend had moved from setuptools to hatchling, and 1.0.1 because the pandas
+> lower bound had been raised. A maintainer can push the correction to the bot's branch.
+
+Merging the feedstock pull request builds and uploads the package. It does not appear to a solver
+until the channel index is regenerated, which takes up to about an hour; the package is visible on
+anaconda.org before then.
+
 ## Changelog conventions
 
 Release notes are generated from commit messages, so commits merged to `develop` must follow the
