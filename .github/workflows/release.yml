@@ -50,10 +50,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     defaults:
       run:
         shell: bash
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
 
       - name: Check release branch
@@ -110,34 +111,6 @@ jobs:
           uvx ruff format --check .
           uvx codespell
 
-      - name: Install modflow executables
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
-        id: install_modflow
-        continue-on-error: true
-        uses: modflowpy/install-modflow-action@v1
-        with:
-          path: ${{ github.workspace }}/autotest
-          repo: modflow6-nightly-build
-
-      # the download reaches out to github and occasionally has its
-      # connection reset, failing the job before any test runs
-      - name: Install modflow executables (retry)
-        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.run_tests) && steps.install_modflow.outcome == 'failure' }}
-        uses: modflowpy/install-modflow-action@v1
-        with:
-          path: ${{ github.workspace }}/autotest
-          repo: modflow6-nightly-build
-
-      # temporary. devtools 2.x will autosync, but 1.x needs opt-in.
-      - name: Sync devtools
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
-        run: uv run mf sync
-
-      - name: Run tests
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
-        working-directory: ./autotest
-        run: uv run pytest -v -n auto -m "not mf6"
-
       - name: Generate changelog
         uses: orhun/git-cliff-action@v4
         with:
@@ -165,14 +138,11 @@ jobs:
           sed -i '1i # Changelog' $clog
 
       - name: Push release branch
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
           ver="${{ steps.version.outputs.version }}"
 
-          # the release notes have already been prepended to HISTORY.md,
-          # keep a copy for the PR body then drop the standalone changelog
-          notes=$(grep -v "### Version $ver" CHANGELOG.md)
+          # the notes are already prepended to HISTORY.md; the pr job reads
+          # them back from there rather than from this standalone file
           rm -f CHANGELOG.md
 
           git config core.sharedRepository true
@@ -181,6 +151,47 @@ jobs:
           git add version.txt modflowapi/version.py CITATION.cff HISTORY.md
           git commit -m "ci(release): set version to $ver, update changelog"
           git push origin "v$ver"
+
+  test:
+    name: Test release branch
+    # a bot pushes the release branch, so no push or pull_request event fires
+    # for it and the pull request would otherwise carry no checks at all
+    needs: prep
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: v${{ needs.prep.outputs.version }}
+
+  pr:
+    name: Draft release pull request
+    needs: [prep, test]
+    # the tests are skipped when a release is dispatched with run_tests off
+    if: ${{ always() && needs.prep.result == 'success' && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+
+      - name: Checkout release branch
+        uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.prep.outputs.version }}
+
+      - name: Draft pull request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          ver="${{ needs.prep.outputs.version }}"
+          notes=$(awk -v hdr="### Version $ver" '
+            index($0, hdr) == 1 { flag = 1; next }
+            /^### Version / { flag = 0 }
+            flag' HISTORY.md)
 
           body='
           # Release '$ver'

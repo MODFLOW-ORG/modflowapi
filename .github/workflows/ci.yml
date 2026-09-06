@@ -6,8 +6,18 @@ on:
   push:
   pull_request:
     branches: [main, develop]
+  # the release workflow calls this to test a release branch, which a bot
+  # pushes and so does not raise a push or pull_request event of its own
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Ref to test. Defaults to the ref that triggered the workflow.'
+        required: false
+        type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # distinct from the calling workflow's group, so a called run cannot cancel
+  # the release that started it
+  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}-tests
   cancel-in-progress: true
 jobs:
 
@@ -23,6 +33,8 @@ jobs:
 
     - name: Checkout repo
       uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.ref }}
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
@@ -44,6 +56,8 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.ref }}
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
@@ -74,6 +88,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -125,6 +141,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -178,6 +196,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
