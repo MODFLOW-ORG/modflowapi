@@ -138,7 +138,7 @@ jobs:
       - name: Run autotests
         working-directory: ./autotest
         shell: bash -l {0}
-        run: pytest -v -n auto -m "not mf6"     
+        run: uv run pytest -v -n auto -m "not mf6"
         
   autotest_mf6_examples:
     name: modflowapi mf6 examples autotests
