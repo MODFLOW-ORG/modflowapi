@@ -112,6 +112,17 @@ jobs:
 
       - name: Install modflow executables
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
+        id: install_modflow
+        continue-on-error: true
+        uses: modflowpy/install-modflow-action@v1
+        with:
+          path: ${{ github.workspace }}/autotest
+          repo: modflow6-nightly-build
+
+      # the download reaches out to github and occasionally has its
+      # connection reset, failing the job before any test runs
+      - name: Install modflow executables (retry)
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.run_tests) && steps.install_modflow.outcome == 'failure' }}
         uses: modflowpy/install-modflow-action@v1
         with:
           path: ${{ github.workspace }}/autotest
