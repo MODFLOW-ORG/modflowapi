@@ -4,6 +4,14 @@ Releases are automated by [`.github/workflows/release.yml`](.github/workflows/re
 Publishing to PyPI uses [trusted publishing](https://docs.pypi.org/trusted-publishers/), so no
 API token is needed, but the repository must have a `release` environment configured.
 
+> [!IMPORTANT]
+> PyPI matches a trusted publisher on the organisation name, the repository name, the workflow
+> filename and the environment name. Renaming any of them silently invalidates the publisher, and
+> nothing reports it until the next release fails with `invalid-publisher`. This happened when the
+> organisation was renamed from `MODFLOW-USGS` to `MODFLOW-ORG`, and went unnoticed for the
+> eighteen months until the next release. After any such rename, update the publisher at
+> https://pypi.org/manage/project/modflowapi/settings/publishing/ to match.
+
 ## 1. Start the release
 
 From the [Actions tab](https://github.com/MODFLOW-ORG/modflowapi/actions/workflows/release.yml),
@@ -46,7 +54,16 @@ Merge the reset pull request to finish the release.
 
 ## Changelog conventions
 
-Release notes are generated from commit messages, so commits merged to `develop` should follow the
+Release notes are generated from commit messages, so commits merged to `develop` must follow the
 [conventional commits](https://www.conventionalcommits.org/) format (`feat:`, `fix:`, `refactor:`,
-etc.). Commits that do not follow the convention are omitted from the changelog. See
-[`cliff.toml`](cliff.toml) for the commit groups and which ones are skipped.
+etc.). Commits that do not follow the convention are omitted from the changelog without warning.
+See [`cliff.toml`](cliff.toml) for the commit groups and which ones are skipped.
+
+Pull requests are squash merged, so the title becomes the commit message the notes are generated
+from. [`.github/workflows/pull_request.yml`](.github/workflows/pull_request.yml) rejects a title
+that is not a conventional commit header, but it cannot tell whether the type is the right one: a
+user facing change titled `chore:` still passes the check and is still dropped from the notes.
+
+Read the generated changelog on the release pull request before merging it. Anything missing is
+added there, into the section for the version being cut, not to `develop`; the section does not
+exist until the release workflow generates it.
