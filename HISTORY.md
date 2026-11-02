@@ -1,4 +1,10 @@
 # Changelog
+### Version 1.0.2
+
+#### Bug fixes
+
+* [fix(sfr)](https://github.com/MODFLOW-ORG/modflowapi/commit/3b93eb7346936cc4d5d1cee1d8791f7b5ba106d3): Read bedk, manning, and upstream_frac from the input context (#128). Committed by Joseph Hughes on 2026-11-02.
+
 ### Version 1.0.1
 
 #### Bug fixes
