@@ -33,8 +33,8 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy>=1.23",
-    "pandas>=2.2.2",
+    "numpy>=2.2.0",
+    "pandas>=2.3.0",
     "xmipy>=1.5.0",
 ]
 
