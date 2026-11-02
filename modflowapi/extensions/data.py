@@ -110,7 +110,9 @@ class ListInput:
                     else:
                         continue
 
-                reduced = var_addr.split("/")[-1].lower()
+                # keep the column name of a variable read from the input context
+                column_names = getattr(self.parent, "_column_names", {})
+                reduced = column_names.get(var_addr, var_addr.split("/")[-1].lower())
                 if reduced in ("maxbound", "nbound"):
                     setattr(self, f"_{reduced}", values)
                     if not self._spd and reduced == "maxbound":
